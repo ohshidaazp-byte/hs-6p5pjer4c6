@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0a1218">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="配達先">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>配達先さがし</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --foam:#f2f5f3;      /* 発泡スチロールの白 */
+  --ice:#d6e8ef;       /* 氷 */
+  --navy:#12304e;      /* 作業服の紺 */
+  --navy2:#0c2038;
+  --orange:#ff6a13;    /* 安全オレンジ */
+  --tag:#ffd84a;       /* 荷札の黄 */
+  --sumi:#101a22;
+  --muted:#5a6d77;
+  --line:#c5d4da;
+  --co:#1f6f8b;        /* 会社の色(会社ごとに差し替え) */
+  --surface:#ffffff;
+  --shadow:0 2px 0 rgba(16,26,34,.08),0 12px 24px -14px rgba(16,26,34,.35);
+  --display:"Dela Gothic One","Noto Sans JP",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans",sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --foam:#0f171d; --ice:#17242c; --surface:#1a2730; --sumi:#eef3f4; --muted:#93a7b0; --line:#2c3d47;
+    --shadow:0 2px 0 rgba(0,0,0,.4),0 12px 24px -14px rgba(0,0,0,.7);
+  }
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--foam);color:var(--sumi);font-family:var(--body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+button{font-family:inherit;cursor:pointer}
+.hid{display:none!important}
+
+/* ---------- ゲート(会社選択 / PASS) ---------- */
+.gate{--sumi:#101a22;--muted:#5a6d77;--foam:#f2f5f3;--line:#c5d4da;--surface:#fff;--navy:#12304e;position:fixed;inset:0;z-index:80;overflow-y:auto;background:var(--navy2);color:#fff;padding:calc(var(--safe-t) + 34px) 20px 40px}
+.gate .in{max-width:520px;margin:0 auto}
+.gate .logo{width:84px;height:84px;border-radius:20px;display:block;margin-bottom:18px;box-shadow:0 10px 24px -8px rgba(0,0,0,.6)}
+.gate h1{font-family:var(--display);font-size:28px;line-height:1.3;font-weight:400;letter-spacing:.02em}
+.gate p.lead{color:#a9c0cf;font-size:14px;margin:8px 0 22px;line-height:1.7}
+.co-card{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;color:var(--sumi);border:0;border-radius:14px;padding:14px 16px;margin-bottom:12px;position:relative;box-shadow:0 6px 0 rgba(0,0,0,.25)}
+.co-card:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.co-card .mk{width:52px;height:52px;border-radius:10px;display:grid;place-items:center;color:#fff;font-family:var(--display);font-size:24px;flex:none}
+.co-card .nm{font-family:var(--display);font-size:20px;font-weight:400}
+.co-card .ds{font-size:12px;color:#5a6d77;margin-top:2px}
+.demo-note{display:inline-block;margin-top:14px;font-size:11.5px;color:#a9c0cf;border:1px dashed #4a6a82;border-radius:8px;padding:6px 10px}
+.pass-box{background:#fff;color:var(--sumi);border-radius:16px;padding:20px;box-shadow:0 8px 0 rgba(0,0,0,.25)}
+.pass-box .who{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.pass-box .who .mk{width:46px;height:46px;border-radius:10px;display:grid;place-items:center;color:#fff;font-family:var(--display);font-size:22px}
+.pass-box .who b{font-family:var(--display);font-size:19px;font-weight:400}
+.pass-box label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.pass-box input{width:100%;font-size:28px;letter-spacing:.3em;font-weight:900;text-align:center;border:3px solid var(--navy);border-radius:12px;padding:12px;background:#f8fafa;color:var(--sumi);outline:none}
+.pass-box input:focus{border-color:var(--orange)}
+.pass-err{color:#d4271a;font-weight:700;font-size:13px;min-height:20px;margin-top:8px}
+.pass-hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+.gate .bl{background:none;border:0;color:#a9c0cf;font-size:13px;text-decoration:underline;margin-top:16px;padding:6px 0}
+
+/* ---------- アプリ本体 ---------- */
+.app{max-width:640px;margin:0 auto;min-height:100%;padding-bottom:calc(92px + var(--safe-b))}
+.band{background:var(--co);color:#fff;padding:calc(var(--safe-t) + 12px) 16px 14px;position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.band::after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:10px;background:repeating-linear-gradient(135deg,var(--sumi) 0 10px,var(--tag) 10px 20px);opacity:.9;clip-path:polygon(0 0,100% 0,100% 40%,0 40%)}
+.band .ico{width:46px;height:46px;border-radius:11px;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+.band .t{flex:1;min-width:0}
+.band .t b{display:block;font-family:var(--display);font-weight:400;font-size:20px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.band .t span{font-size:11.5px;opacity:.9}
+.band .gear{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.7);background:rgba(0,0,0,.18);color:#fff;font-size:20px;flex:none}
+.sync{margin:22px 16px 0;font-size:12.5px;font-weight:700;padding:8px 12px;border-radius:8px;background:var(--ice);color:var(--muted)}
+.sync.warn{background:#ffe3d6;color:#a8400b}
+.view{padding:20px 16px 0}
+
+/* 検索 */
+.searchbar{position:sticky;top:78px;z-index:20;padding:6px 0 12px;background:linear-gradient(var(--foam) 82%,transparent)}
+.searchbar input{width:100%;font-family:var(--body);font-size:23px;font-weight:900;padding:16px 18px;border:3px solid var(--navy);border-radius:14px;background:var(--surface);color:var(--sumi);outline:none;box-shadow:0 5px 0 var(--navy)}
+.searchbar input:focus{border-color:var(--orange);box-shadow:0 5px 0 var(--orange)}
+.searchbar input::placeholder{color:var(--muted);font-weight:500;font-size:17px}
+.sub{font-size:12.5px;color:var(--muted);margin:2px 2px 0}
+.idle{text-align:center;color:var(--muted);padding:34px 8px 6px;font-size:13.5px;line-height:1.8}
+
+/* 荷札カード */
+.ft{position:relative;background:var(--surface);border-radius:6px 22px 22px 22px;padding:20px 18px 16px 22px;margin:20px 0 0 14px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.ft::before{content:"";position:absolute;left:-14px;top:18px;width:22px;height:22px;border-radius:50%;background:var(--foam);border:3px solid var(--navy)}
+.ft::after{content:"";position:absolute;left:-6px;top:28px;width:30px;height:0;border-top:3px dotted var(--navy);transform:rotate(18deg);transform-origin:left}
+.ft .head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.ft .nm{font-family:var(--display);font-weight:400;font-size:21px;line-height:1.35;word-break:break-all}
+.ft .al{font-size:12px;color:var(--muted);margin-top:3px}
+.ft .time{margin-top:12px;display:inline-flex;align-items:baseline;gap:8px;background:var(--navy);color:#fff;border-radius:8px;padding:6px 14px 6px 12px}
+.ft .time small{font-size:11px;color:#9fc3dd;font-weight:700}
+.ft .time b{font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:.03em;color:var(--tag)}
+.rows{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;margin-top:14px}
+.rows .k{font-size:11px;font-weight:900;color:var(--muted);padding-top:3px;white-space:nowrap}
+.rows .v{font-size:16.5px;font-weight:700;line-height:1.5}
+.rows .v.note{font-weight:500;font-size:14.5px;color:var(--muted);white-space:pre-wrap}
+.rows .v.empty{font-weight:400;color:var(--muted)}
+.spot{display:inline-block;min-width:64px;text-align:center;background:var(--tag);color:var(--sumi);font-family:var(--display);font-size:22px;padding:2px 12px;border:3px solid var(--sumi);border-radius:6px;transform:rotate(-2deg);box-shadow:3px 3px 0 var(--sumi)}
+.thumbs{display:flex;gap:8px;margin-top:14px;overflow-x:auto}
+.thumbs img{height:92px;width:auto;border-radius:10px;border:2px solid var(--line);flex:none;cursor:zoom-in}
+.thumbs img.ph-wait,.photos img.ph-wait{width:92px;background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.12),rgba(255,255,255,.04));background-size:200% 100%;animation:phw 1.2s linear infinite}
+@keyframes phw{to{background-position:-200% 0}}
+.acts{display:flex;gap:8px;margin-top:14px}
+.btn{border:0;border-radius:12px;font-size:15px;font-weight:900;padding:13px 16px;min-height:48px}
+.btn.line{background:var(--ice);color:var(--sumi)}
+.btn.main{background:var(--orange);color:#fff;box-shadow:0 4px 0 #b44a07}
+.btn.main:active{transform:translateY(3px);box-shadow:0 1px 0 #b44a07}
+.btn.navy{background:var(--navy);color:#fff}
+.btn.ghost{background:transparent;color:var(--muted);text-decoration:underline;min-height:40px}
+.btn.danger{background:transparent;color:#d4271a}
+.btn.flex1{flex:1}
+.empty-state{text-align:center;padding:34px 12px;color:var(--muted);line-height:1.8}
+.empty-state .big{font-size:40px}
+.empty-state .btn{margin-top:14px}
+
+/* ルート */
+.route-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.route-head h2{font-family:var(--display);font-weight:400;font-size:21px}
+.seg{display:inline-flex;border:3px solid var(--navy);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--surface);color:var(--sumi);font-weight:900;font-size:13px;padding:8px 12px}
+.seg button.on{background:var(--navy);color:#fff}
+.adder{position:relative;margin:10px 0 6px}
+.adder input{width:100%;font-size:18px;font-weight:700;padding:14px 16px;border:3px dashed var(--navy);border-radius:12px;background:var(--surface);color:var(--sumi);outline:none}
+.adder input:focus{border-style:solid;border-color:var(--orange)}
+.sug{background:var(--surface);border:2px solid var(--navy);border-radius:12px;margin-top:6px;overflow:hidden}
+.sug button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;border:0;background:none;color:var(--sumi);padding:13px 14px;font-size:16px;font-weight:700;border-bottom:1px solid var(--line)}
+.sug button:last-child{border-bottom:0}
+.sug small{color:var(--muted);font-weight:500}
+.start{display:flex;align-items:center;gap:10px;margin:18px 0 0;font-size:13px;font-weight:900;color:var(--muted)}
+.start::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px #ffd0b4}
+.stop{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;box-shadow:var(--shadow);position:relative}
+.stop .no{width:48px;height:48px;border-radius:50%;background:var(--navy);color:var(--tag);font-family:var(--display);font-size:24px;display:grid;place-items:center}
+.stop .nm{font-family:var(--display);font-size:18px;line-height:1.3;word-break:break-all}
+.stop .meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:4px;font-size:13px;color:var(--muted);font-weight:700}
+.stop .spot{font-size:15px;min-width:0;padding:0 8px;border-width:2px;box-shadow:2px 2px 0 var(--sumi)}
+.stop .ctl{display:flex;flex-direction:column;gap:6px}
+.stop .ctl button{width:48px;height:42px;border-radius:10px;border:2px solid var(--navy);background:var(--surface);color:var(--sumi);font-size:18px;font-weight:900}
+.stop .ctl .ok{background:var(--navy);color:#fff}
+.stop.done{opacity:.45}
+.stop.done .nm{text-decoration:line-through}
+.stop.done .ctl .ok{background:#1c7a4d;border-color:#1c7a4d}
+.mv{display:flex;gap:4px}
+.mv button{width:34px!important;height:34px!important;font-size:14px!important}
+.route-tools{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.map-note{margin-top:16px;font-size:12px;color:var(--muted);line-height:1.7;background:var(--ice);border-radius:10px;padding:10px 12px}
+
+/* 下のタブ */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--navy);padding:8px 10px calc(8px + var(--safe-b));display:flex;gap:8px;max-width:640px;margin:0 auto;border-radius:20px 20px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.25)}
+.tabs button{flex:1;border:0;border-radius:14px;background:transparent;color:#9fc3dd;font-weight:900;font-size:12.5px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:58px;position:relative}
+.tabs button .i{font-size:22px;line-height:1}
+.tabs button.on{background:#fff;color:var(--navy)}
+.tabs .plus{background:var(--orange);color:#fff}
+.tabs .badge{position:absolute;top:2px;right:18%;background:var(--tag);color:var(--sumi);border-radius:99px;min-width:22px;height:22px;font-size:12px;display:grid;place-items:center;font-family:var(--display);padding:0 5px}
+
+/* シート */
+.back{position:fixed;inset:0;background:rgba(8,16,24,.55);z-index:60}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;max-width:640px;margin:0 auto;max-height:92vh;overflow-y:auto;background:var(--surface);border-radius:22px 22px 0 0;padding:16px 18px calc(24px + var(--safe-b));box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+.sheet .grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 12px}
+.sheet h2{font-family:var(--display);font-weight:400;font-size:21px}
+.sheet .sub{margin:4px 0 14px}
+.sheet h3{font-family:var(--display);font-weight:400;font-size:16px;margin:20px 0 6px}
+.sheet hr{border:0;border-top:1px dashed var(--line);margin:20px 0}
+.form{display:flex;flex-direction:column;gap:13px}
+.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:900;color:var(--muted)}
+.f input,.f textarea,.f select{font-family:inherit;font-size:16px;font-weight:700;color:var(--sumi);background:var(--foam);border:2px solid var(--line);border-radius:10px;padding:11px 12px;outline:none;width:100%}
+.f input:focus,.f textarea:focus,.f select:focus{border-color:var(--orange)}
+.f textarea{min-height:60px;resize:vertical}
+.f .n{font-weight:500;font-size:11.5px}
+.tr{display:flex;align-items:center;gap:8px}.tr select{flex:1;min-width:0}.tr .sep{color:var(--muted)}
+.dup{font-size:12.5px;font-weight:700;color:#a8400b;background:#ffe3d6;border-radius:8px;padding:8px 10px}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos .ph{position:relative;width:92px;height:92px;border-radius:10px;overflow:hidden;border:2px solid var(--line)}
+.photos .ph img{width:100%;height:100%;object-fit:cover}
+.photos .ph button{position:absolute;top:3px;right:3px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:15px}
+.photos .add{width:92px;height:92px;border-radius:10px;border:3px dashed var(--navy);background:var(--foam);color:var(--navy);font-weight:900;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.photos .add b{font-size:26px;line-height:1}
+.msg{font-size:13px;font-weight:700;color:#1c7a4d;min-height:18px;margin-top:6px}
+.msg.err{color:#d4271a}
+.formact{display:flex;gap:10px;margin-top:8px}
+textarea.bk{font-size:11px;font-family:ui-monospace,monospace;min-height:80px;width:100%;border:2px solid var(--line);border-radius:10px;padding:8px;background:var(--foam);color:var(--sumi)}
+.lightbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:14px}
+.lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+.lightbox button{position:absolute;top:calc(var(--safe-t) + 12px);right:14px;width:48px;height:48px;border-radius:50%;border:0;background:#fff;font-size:22px;font-weight:900}
+.mapbox{background:var(--surface);border:2px solid var(--navy);border-radius:14px;padding:8px;margin:10px 0 0}
+.msvg{width:100%;height:auto;display:block}
+.m-lot{fill:var(--ice);stroke:var(--navy);stroke-width:.8;stroke-dasharray:3 2}
+.m-p{fill:var(--muted)}
+.m-t{font-size:7px;fill:var(--muted);font-weight:700}
+.m-l{font-size:6.5px;font-weight:900;fill:var(--navy)}
+.m-n{font-size:6.5px;font-weight:900;fill:#1c7a4d}
+.m-path{fill:none;stroke:var(--orange);stroke-width:1.6;stroke-linejoin:round;stroke-dasharray:4 2}
+.m-start{fill:#1c7a4d;stroke:#fff;stroke-width:1}
+.m-st{font-size:6px;font-weight:900;fill:#1c7a4d}
+.m-stop circle{fill:var(--navy);stroke:var(--tag);stroke-width:1.2}
+.m-stop text{font-size:6.2px;font-weight:900;fill:var(--tag)}
+.m-stop.done{opacity:.4}
+.m-hl{fill:rgba(255,106,19,.25);stroke:var(--orange);stroke-width:1.6}
+.m-hd{fill:var(--orange)}
+.m-hlt{font-size:9px;font-weight:900;fill:var(--navy)}
+.spot-b{cursor:pointer;font-family:var(--display)}
+.warnx{color:#a8400b;font-weight:900}
+.m-bld{fill:rgba(18,48,78,.10);stroke:var(--navy);stroke-width:.6}
+.m-gate rect{fill:var(--surface);stroke:#1c7a4d;stroke-width:1.2}
+.m-gate text{font-size:6.4px;font-weight:900;fill:#1c7a4d}
+.m-gate.on rect{fill:#1c7a4d}
+.m-gate.on text{fill:#fff}
+.gates{margin:12px 0 0;background:var(--surface);border:2px solid var(--navy);border-radius:12px;padding:10px 12px}
+.gates>span{display:block;font-size:12.5px;font-weight:900;color:var(--muted);margin-bottom:6px}
+.gchips{display:flex;gap:6px;flex-wrap:wrap}
+.gchips button{width:40px;height:40px;border-radius:10px;border:2px solid #1c7a4d;background:var(--surface);color:#1c7a4d;font-family:var(--display);font-size:18px}
+.gchips button.on{background:#1c7a4d;color:#fff}
+.m-ow{fill:none;stroke:#8a00ff;stroke-width:2.2;opacity:.55}
+.m-owa{fill:#8a00ff}
+.m-owt{font-size:6px;font-weight:900;fill:#8a00ff}
+.m-unused{fill:rgba(40,200,60,.55);stroke:#1c7a4d;stroke-width:.6}
+.m-road{stroke:var(--muted);stroke-width:1;opacity:.45;stroke-dasharray:2 2}
+.back-row{margin:12px 0 0;font-size:13px;font-weight:900;color:var(--muted);text-align:center;padding:10px;border:2px dashed var(--line);border-radius:12px}
+.plrow{display:flex;gap:8px;align-items:center;margin:6px 0}.plrow>span{flex:1;font-weight:900}.plrow button{border:2px solid var(--line);background:var(--surface);color:var(--sumi);border-radius:9px;font-size:13px;font-weight:900;padding:7px 10px}.plrow small{color:var(--mute,#7a8a99);font-weight:500}
+.msvg.pl .m-t,.msvg.pl .m-fact,.msvg.pl .m-st,.msvg.pl .m-hlt,.msvg.pl .m-owt{font-size:calc(7px*var(--k))}
+.msvg.pl .m-gate,.msvg.pl .m-stop,.msvg.pl .m-hl,.msvg.pl .m-hd{transform-box:fill-box;transform-origin:center;transform:scale(var(--k))}
+.msvg.pl .m-path{stroke-width:calc(1.8px*var(--k))}.msvg.pl .m-ow{stroke-width:calc(2.2px*var(--k))}
+.msvg.pl .m-fac{stroke-width:calc(.9px*var(--k))}
+.m-bk{fill:rgba(130,150,165,.20);stroke:rgba(130,150,165,.35);stroke-width:calc(.5px*var(--k))}
+.m-br0{fill:none;stroke:rgba(150,165,176,.55);stroke-width:calc(1.4px*var(--k));stroke-linecap:round}
+.m-br1{fill:none;stroke:rgba(150,165,176,.8);stroke-width:calc(2.6px*var(--k));stroke-linecap:round}
+.m-cr{fill:var(--muted);opacity:.8}
+.m-leg{fill:none;stroke-width:calc(1.9px*var(--k));stroke-linejoin:round;stroke-linecap:round;opacity:.92}
+.m-rc{stroke:#8fa3b0;stroke-width:calc(6.2px*var(--k));stroke-linecap:round}
+.m-ri{stroke:#e3eaee;stroke-width:calc(4.2px*var(--k));stroke-linecap:round}
+.m-rn{font-weight:900;fill:#3b5566;font-style:italic}
+.m-lm{font-weight:700;fill:var(--muted)}
+.m-pz{fill:rgba(255,200,40,.34);stroke:#d49a00;stroke-width:calc(1.4px*var(--k))}
+.m-pb circle{fill:#d49a00;stroke:#fff;stroke-width:calc(1.2px*var(--k))}
+.m-pb text{font-weight:900;fill:#fff}
+.m-pn{font-weight:900;fill:var(--navy)}
+.mapbox.big{overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}.mapbox.big svg{width:230%;max-width:none}
+.m-road2{stroke:#b9a6b4;stroke-width:3.2;stroke-linecap:round;fill:none}
+.m-exit{fill:none;stroke:#1c7a4d;stroke-width:1.6}
+.oz{background:#fff0c2!important;color:#3a2f00!important}
+.m-sky{fill:rgba(255,216,74,.18);stroke:#c9a21a;stroke-width:.8;stroke-dasharray:3 2}
+.m-door{fill:#1c7a4d}
+.m-tk rect,.m-tk path{fill:var(--navy)}
+.m-tk .wh{fill:var(--sumi)}
+.m-tk .win{fill:#fff;opacity:.9}
+.m-tk{opacity:.5}
+.m-tk.hot{opacity:1}
+.m-tk.hot rect,.m-tk.hot path{fill:var(--orange)}
+.m-stop.sky .m-tk{opacity:1}
+.m-stop.sky .m-no{fill:var(--navy);stroke:var(--tag);stroke-width:1}
+.m-stop.sky text{font-size:5.6px;font-weight:900;fill:var(--tag)}
+.seg.wide{display:flex;width:100%}
+.seg.wide button{flex:1;padding:8px 4px;line-height:1.3}
+.seg.wide small{display:block;font-size:10.5px;font-weight:500}
+.seg.wide button:disabled{opacity:.4}
+.sky-b{background:#fff0c2}
+#skyBox svg{cursor:crosshair;touch-action:manipulation}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{border:2px solid var(--navy);background:var(--surface);color:var(--sumi);border-radius:10px;padding:10px 14px;font-weight:900;font-size:14px}
+.chips button.on{background:var(--navy);color:#fff}
+.out-b{background:#e4f0ff}
+.m-fac{fill:#e4f0ff;stroke:#2a6fbf;stroke-width:.8}
+.m-fact{font-size:5.6px;font-weight:900;fill:#2a6fbf}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+/* =====================================================================
+   プレミアムテーマ(2026-10-14): 夜明け前の市場。墨のような濃い藍に、真鍮の細い線と文字だけを光らせる。
+   色: 墨 #0a1218 / 面 #131f29 / 生成りの文字 #ece6d8 / 真鍮 #c9a96b。見出しは明朝、本文はゴシック。
+   ===================================================================== */
+:root,:root:not([data-theme=light]){
+  --foam:#0a1218; --ice:#0f1921; --surface:#121e28; --sumi:#ece6d8; --muted:#8f9ca5; --line:rgba(236,230,216,.13);
+  --brass:#c9a96b; --brass2:#e8d3a2; --ink:#0a1218; --raise:#182733;
+  --orange:#c9a96b; --tag:#e8d3a2;
+  --display:"Shippori Mincho B1","Noto Serif JP","Hiragino Mincho ProN",serif;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 22px 40px -26px rgba(0,0,0,.9);
+  color-scheme:dark;
+}
+body{background:radial-gradient(900px 420px at 50% -80px,#16283a 0%,rgba(22,40,58,0) 70%),var(--foam);background-attachment:fixed;color:var(--sumi);letter-spacing:.02em}
+h1,h2,h3,.nm,b{font-synthesis:none}
+
+/* --- 会社を選ぶ・PASS --- */
+.gate{--sumi:#ece6d8;--muted:#8f9ca5;--foam:#0a1218;--line:rgba(236,230,216,.13);--surface:#121e28;background:radial-gradient(800px 460px at 50% -60px,#1a3045 0%,rgba(26,48,69,0) 70%),#0a1218;color:#ece6d8}
+.gate h1,.gate .co-pull select{color:#ece6d8}
+.gate .logo{width:72px;height:72px;border-radius:18px;box-shadow:0 0 0 1px rgba(201,169,107,.55),0 18px 40px -14px #000}
+.gate h1{font-weight:800;font-size:27px;letter-spacing:.14em;margin-top:6px}
+.gate h1::after{content:"";display:block;width:44px;height:1px;background:var(--brass);margin:14px 0 0}
+.gate p.lead{color:var(--muted);font-size:13.5px;letter-spacing:.05em;margin:14px 0 26px}
+.co-pull{position:relative;margin-bottom:10px}
+.co-pull label{display:block;font-size:11.5px;color:var(--brass);letter-spacing:.2em;margin-bottom:8px}
+.co-pull select{appearance:none;-webkit-appearance:none;width:100%;font-family:var(--display);font-size:21px;font-weight:700;color:var(--sumi);background:linear-gradient(180deg,#15222d,#101a23);border:1px solid rgba(201,169,107,.45);border-radius:14px;padding:17px 48px 17px 18px;outline:none;box-shadow:0 18px 36px -24px #000}
+.co-pull select:focus{border-color:var(--brass2);box-shadow:0 0 0 3px rgba(201,169,107,.18)}
+.co-pull::after{content:"";position:absolute;right:20px;bottom:25px;width:9px;height:9px;border-right:1.5px solid var(--brass);border-bottom:1.5px solid var(--brass);transform:rotate(45deg);pointer-events:none}
+.co-pull option{font-family:var(--body);font-size:16px;color:#111;background:#fff}
+.co-desc{display:flex;align-items:center;gap:12px;margin:14px 2px 22px;color:var(--muted);font-size:12.5px;line-height:1.7}
+.co-desc .mk{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-family:var(--display);font-size:17px;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+.demo-note{border:0;border-top:1px solid var(--line);border-radius:0;padding:14px 0 0;margin-top:22px;color:var(--muted);letter-spacing:.06em;display:block}
+.pass-box{background:linear-gradient(180deg,#15222d,#0f1921);border:1px solid rgba(201,169,107,.3);border-radius:20px;box-shadow:0 30px 60px -30px #000;color:var(--sumi);padding:24px 22px}
+.pass-box .who b{font-weight:800;letter-spacing:.08em;font-size:19px}
+.pass-box .who .mk{border-radius:11px;font-weight:800}
+.pass-box label{color:var(--brass);letter-spacing:.14em;font-size:11px}
+.pass-box input{background:#0a1218;color:var(--sumi);border:1px solid var(--line);border-bottom:1px solid var(--brass);border-radius:12px;font-weight:700;font-size:26px}
+.pass-box input:focus{border-color:var(--brass);box-shadow:0 0 0 3px rgba(201,169,107,.16)}
+.gate .bl{color:var(--muted);text-decoration:none;letter-spacing:.08em}
+
+/* --- 上の帯 --- */
+.band{background:linear-gradient(180deg,#101c26 0%,#0b141b 100%);color:var(--sumi);border-bottom:1px solid rgba(201,169,107,.35);box-shadow:0 14px 30px -22px #000;padding-bottom:13px}
+.band::after{display:none}
+.band .ico{width:42px;height:42px;border-radius:11px;box-shadow:0 0 0 1px rgba(201,169,107,.5)}
+.band .t b{font-weight:800;font-size:19px;letter-spacing:.1em}
+.band .t span{font-size:11px;color:var(--brass);letter-spacing:.14em;opacity:1}
+.band .gear{width:42px;height:42px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--brass2);display:grid;place-items:center;padding:0}
+.band .gear svg{width:20px;height:20px}
+.sync{background:var(--raise);color:var(--muted);border:1px solid var(--line)}
+
+/* --- 検索 --- */
+.searchbar{top:71px;background:linear-gradient(rgba(10,18,24,.92) 74%,rgba(10,18,24,0))}
+.searchbar input{font-size:19px;font-weight:500;padding:16px 18px 16px 50px;border:1px solid var(--line);border-radius:16px;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23c9a96b' stroke-width='1.7' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 21 21'/%3E%3C/svg%3E") no-repeat 17px center;box-shadow:0 18px 34px -24px #000;color:var(--sumi);letter-spacing:.04em}
+.searchbar input:focus{border-color:var(--brass);box-shadow:0 0 0 3px rgba(201,169,107,.16),0 18px 34px -24px #000}
+.searchbar input::placeholder{font-size:16px;font-weight:400;color:#6f7d87}
+.idle{color:var(--muted);letter-spacing:.06em}.idle b{color:var(--brass2)}
+
+/* --- 配達先のカード(荷札をやめて、細い線の札) --- */
+.ft{margin:16px 0 0;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,#16242f 0%,#101b24 100%);padding:22px 20px 18px 24px;box-shadow:var(--shadow);overflow:hidden}
+.ft::before{left:0;top:22px;bottom:22px;width:2px;height:auto;border:0;border-radius:2px;background:linear-gradient(var(--brass),rgba(201,169,107,.15))}
+.ft::after{display:none}
+.ft .nm{font-weight:800;font-size:21px;letter-spacing:.05em;line-height:1.4}
+.ft .al{letter-spacing:.06em}
+.ft .time{background:none;border-radius:0;padding:0;margin-top:14px;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px;display:flex}
+.ft .time small{color:var(--brass);letter-spacing:.18em;font-weight:500}
+.ft .time b{font-weight:700;font-size:30px;letter-spacing:.06em;color:var(--brass2)}
+.rows .k{color:var(--brass);letter-spacing:.14em;font-weight:500;font-size:10.5px}
+.rows .v{font-weight:500;font-size:16px}
+.spot{background:rgba(201,169,107,.08);color:var(--brass2);border:1px solid rgba(201,169,107,.55);border-radius:9px;transform:none;box-shadow:none;font-weight:800;font-size:19px;letter-spacing:.08em;padding:3px 14px}
+.thumbs img{border:1px solid var(--line);border-radius:12px}
+
+/* --- ボタン --- */
+.btn{border-radius:14px;font-weight:700;letter-spacing:.08em;min-height:50px}
+.btn.main{background:linear-gradient(180deg,#e0c88f,#c3a263);color:#1a1405;box-shadow:0 14px 26px -16px rgba(201,169,107,.7);font-weight:800}
+.btn.main:active{transform:translateY(1px);box-shadow:none}
+.btn.line{background:transparent;color:var(--sumi);border:1px solid var(--line)}
+.btn.navy{background:var(--raise);color:var(--sumi);border:1px solid rgba(201,169,107,.4)}
+.btn.ghost{color:var(--muted);text-decoration:none}
+.btn.danger{color:#e07a6e}
+
+/* --- 切り替え・候補のボタン --- */
+.seg{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.seg button{background:transparent;color:var(--muted);font-weight:700;letter-spacing:.06em}
+.seg button.on{background:linear-gradient(180deg,#e0c88f,#c3a263);color:#1a1405}
+.seg.wide button small{opacity:.8}
+.chips button{border:1px solid var(--line);background:var(--surface);color:var(--sumi);font-weight:700;border-radius:12px;letter-spacing:.05em}
+.chips button.on{background:rgba(201,169,107,.16);border-color:var(--brass);color:var(--brass2)}
+.chips button.oz,.oz{background:rgba(201,169,107,.1)!important;color:var(--brass2)!important;border-color:rgba(201,169,107,.4)!important}
+.sky-b,.out-b{background:rgba(201,169,107,.12)!important}
+
+/* --- ルート --- */
+.route-head h2{font-weight:800;letter-spacing:.12em}
+.adder input{border:1px dashed rgba(201,169,107,.5);border-radius:14px;background:var(--surface);color:var(--sumi);font-weight:500}
+.adder input:focus{border-style:solid;border-color:var(--brass)}
+.sug{border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.start{color:var(--muted);letter-spacing:.12em;font-weight:500}
+.start::before{background:var(--brass);box-shadow:0 0 0 5px rgba(201,169,107,.2)}
+.stop{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#15222d,#0f1a22);box-shadow:var(--shadow)}
+.stop .no{background:transparent;border:1px solid var(--brass);color:var(--brass2);font-weight:800;width:44px;height:44px;font-size:21px}
+.stop{grid-template-columns:44px 1fr auto}
+.stop .nm{font-weight:700;letter-spacing:.04em}
+.stop .meta{font-weight:500}
+.stop .spot{font-size:14px;box-shadow:none;border-width:1px}
+.stop .ctl button{border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--sumi);border-radius:11px}
+.stop .ctl .ok{background:rgba(201,169,107,.16);border-color:var(--brass);color:var(--brass2)}
+.stop.done .ctl .ok{background:#1c7a4d;border-color:#1c7a4d;color:#fff}
+.map-note{background:var(--surface);border:1px solid var(--line);color:var(--muted);letter-spacing:.03em}
+.mapbox{background:linear-gradient(180deg,#0f1921,#0c151c);border:1px solid var(--line);border-radius:16px}
+
+/* --- 下のタブ(絵文字をやめて、細い線のアイコン) --- */
+.tabs{background:rgba(11,19,26,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid rgba(201,169,107,.35);border-radius:22px 22px 0 0;box-shadow:0 -18px 40px -20px #000;gap:6px;padding-top:9px}
+.tabs button{color:var(--muted);font-weight:500;letter-spacing:.14em;font-size:11px;border-radius:14px}
+.tabs button .i{display:block;height:24px}.tabs button .i svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{background:rgba(201,169,107,.1);color:var(--brass2)}
+.tabs button.on::before{content:"";position:absolute;top:-9px;left:30%;right:30%;height:2px;background:var(--brass);border-radius:2px}
+.tabs .plus,.tabs .plus.on{background:linear-gradient(180deg,#e0c88f,#c3a263);color:#1a1405;font-weight:800}
+.tabs .badge{background:var(--brass);color:#1a1405;font-weight:800;top:3px;right:20%}
+
+/* --- シート・フォーム --- */
+.back{background:rgba(3,8,12,.66);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.sheet{background:linear-gradient(180deg,#121f2a,#0d171f);border-top:1px solid rgba(201,169,107,.4);border-radius:26px 26px 0 0;box-shadow:0 -30px 60px -20px #000}
+.sheet .grab{background:rgba(201,169,107,.45);width:38px;height:3px}
+.sheet h2{font-weight:800;letter-spacing:.12em;font-size:20px}
+.sheet h3{font-weight:700;letter-spacing:.12em;color:var(--brass2);font-size:14px}
+.sheet hr{border-top:1px solid var(--line)}
+.f{color:var(--brass);letter-spacing:.12em;font-weight:500;font-size:11px}
+.f input,.f textarea,.f select{background:#0a1218;border:1px solid var(--line);border-radius:12px;font-weight:500;color:var(--sumi)}
+.f input:focus,.f textarea:focus,.f select:focus{border-color:var(--brass);box-shadow:0 0 0 3px rgba(201,169,107,.14)}
+.dup{background:rgba(224,122,110,.12);color:#f0a79e;border:1px solid rgba(224,122,110,.35)}
+.photos .add{border:1px dashed rgba(201,169,107,.5);background:transparent;color:var(--brass)}
+.msg{color:#7fd1a1}.msg.err{color:#f0a79e}
+textarea.bk{background:#0a1218;border:1px solid var(--line);color:var(--muted)}
+.plrow button{border:1px solid var(--line);background:transparent;color:var(--sumi)}
+.stop .spot.sky-b,.stop .spot.out-b{font-size:12.5px;letter-spacing:.02em;font-weight:700;text-align:left;line-height:1.4;padding:3px 10px}
+:focus-visible{outline:2px solid var(--brass2);outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- 会社を選ぶ -->
+<div class="gate hid" id="gateCo"><div class="in">
+  <img class="logo" src="icon-192.png" alt="">
+  <h1>配達先さがし</h1>
+  <p class="lead">ご利用の会社を選んでください。登録した内容は、会社ごとに完全に分かれて保存されます。</p>
+  <div id="coList"></div>
+  <span class="demo-note">デモ版: 表示されるデータはすべて架空です</span>
+</div></div>
+
+<!-- PASS -->
+<div class="gate hid" id="gatePass"><div class="in">
+  <div class="pass-box">
+    <div class="who"><span class="mk" id="pMark"></span><b id="pName"></b></div>
+    <label for="passIn">PASS(パスワード)を入れてください</label>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="off" placeholder="••••">
+    <div class="pass-err" id="passErr"></div>
+    <div class="pass-hint" id="passHint"></div>
+    <div class="acts"><button class="btn main flex1" id="passGo">入る</button></div>
+    <div class="pass-hint" style="margin-top:10px">一度入れば、この端末では次から入力しなくて大丈夫です。</div>
+  </div>
+  <button class="bl" id="passBack">← 会社を選びなおす</button>
+</div></div>
+
+<div class="app hid" id="app">
+  <div class="band">
+    <img class="ico" id="bandIco" src="icon-192.png" alt="">
+    <div class="t"><b id="coName"></b><span id="coSub"></span></div>
+    <button class="gear" id="openSet" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+  </div>
+  <div class="sync hid" id="sync"></div>
+
+  <section class="view" id="vSearch">
+    <div class="searchbar">
+      <input id="q" type="text" inputmode="search" placeholder="箱に書いてある名前" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="sub">ひらがな・カタカナ・呼び名でも探せます。一部の文字だけでも大丈夫。</div>
+    </div>
+    <div id="results"></div>
+  </section>
+
+  <section class="view hid" id="vRoute">
+    <div class="route-head">
+      <h2>回る順番</h2>
+      <div class="seg" id="modeSeg"><button data-m="auto" class="on">おまかせ</button><button data-m="manual">手で並べる</button></div>
+    </div>
+    <div class="adder"><input id="rq" type="text" placeholder="＋ 配達先の名前を入れる" autocomplete="off"></div>
+    <div id="rsug"></div>
+    <div id="routeList"></div>
+    <div class="route-tools" id="routeTools"></div>
+    <div class="map-note" id="mapNote"></div>
+  </section>
+
+  <nav class="tabs">
+    <button id="tSearch" class="on"><span class="i"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>さがす</button>
+    <button id="tRoute"><span class="i"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.4 6H14a3.5 3.5 0 0 1 0 7h-4a3.5 3.5 0 0 0 0 7h5.6"/></svg></span>ルート<span class="badge hid" id="rBadge">0</span></button>
+    <button id="tAdd" class="plus"><span class="i"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>登録</button>
+  </nav>
+</div>
+
+<!-- 登録・編集 -->
+<div class="back hid" id="bkForm"></div>
+<div class="sheet hid" id="shForm">
+  <div class="grab"></div>
+  <h2 id="fTitle">配達先を登録</h2>
+  <p class="sub">呼び名は、箱に書かれている言い方をすべて入れてください。</p>
+  <div class="form">
+    <label class="f">正式名・表示名<input id="fName" type="text" placeholder="例: 寿司 海風 本店"></label>
+    <div class="dup hid" id="fDup"></div>
+    <label class="f">呼び名(カンマ区切り)<textarea id="fAl" placeholder="例: うみかぜ、海風"></textarea></label>
+    <label class="f">配達時間帯<div class="tr"><select id="fT1"></select><span class="sep">〜</span><select id="fT2"></select></div></label>
+    <label class="f">車の特徴・ナンバー<input id="fCar" type="text" placeholder="例: 白いハイエース №12"></label>
+    <div class="f">場所の種類(ルートの計算に使います)<div class="seg wide" id="areaSeg"><button type="button" data-a="in" class="on">場内駐車場<small>柱の番号</small></button><button type="button" data-a="sky">青空駐車場<small>地図に置く</small></button><button type="button" data-a="out">場外<small>施設を選ぶ</small></button></div></div>
+    <div id="boxIn"><label class="f">停車位置(柱の番号)<input id="fSpot" type="text" placeholder="例: B-12" autocapitalize="characters"><span class="n" id="spotHelp"></span></label></div>
+    <div id="boxOut" class="hid"><div class="f">場外の行き先(施設を選ぶ / 🚚は、地図にトラックを置く場所)<div class="chips" id="outChips"></div></div><div class="f hid" id="doorRow">入口(お店の入口が3つあります)<div class="chips" id="doorChips"></div></div><div class="f"><div class="mapbox big" id="outBox"></div><span class="n" id="outHelp"></span></div></div>
+    <div id="boxSky" class="hid"><div class="f">青空駐車場など(エリアを選ぶ)<div class="chips" id="zoneChips"></div></div><div class="f">地図<div class="mapbox" id="skyBox"></div><span class="n" id="skyHelp"></span></div></div>
+    <label class="f">場所の説明<input id="fLoc" type="text" placeholder="例: 2番搬入口の脇"></label>
+    <label class="f">メモ<textarea id="fNote" placeholder="例: 不在時は冷蔵庫の上段へ"></textarea></label>
+    <div class="f">写真(最大3枚)<div class="photos" id="fPhotos"></div><span class="n">車・置き場所・目印など、文章より絵が早いときに</span></div>
+  </div>
+  <div class="msg" id="fMsg"></div>
+  <div class="formact">
+    <button class="btn danger hid" id="fDel">削除</button>
+    <button class="btn line flex1" id="fCancel">やめる</button>
+    <button class="btn main flex1" id="fSave">保存</button>
+  </div>
+</div>
+<input type="file" id="fileIn" accept="image/*" class="hid">
+
+<!-- 設定 -->
+<div class="back hid" id="bkSet"></div>
+<div class="sheet hid" id="shSet">
+  <div class="grab"></div>
+  <h2>設定</h2>
+  <p class="sub" id="setSub"></p>
+  <h3>PASSを変える</h3>
+  <div class="form"><label class="f">新しいPASS<input id="newPass" type="password" inputmode="numeric" placeholder="4桁以上の数字や文字"></label>
+  <button class="btn navy" id="savePass">PASSを変更</button></div>
+  <div class="msg" id="setMsg"></div>
+  <hr>
+  <h3>登録済み一覧</h3>
+  <div id="allList"></div>
+  <hr>
+  <h3>場外の行き先(場所の候補)</h3>
+  <p class="sub">登録のとき「場外」に出る行き先です。自分で増やしたり、名前を変えたり、使っていないものを消せます。</p>
+  <div id="plList"></div>
+  <button class="btn line" id="plAdd">＋ 行き先を足す</button>
+  <hr>
+  <h3>バックアップ</h3>
+  <p class="sub">端末を変える時などに備えて、時々コピーして保管してください。</p>
+  <textarea class="bk" id="bkText" readonly></textarea>
+  <div class="acts"><button class="btn line flex1" id="bkCopy">コピー</button><button class="btn line flex1" id="bkRestore">この内容から復元</button></div>
+  <hr>
+  <div class="acts">
+    <button class="btn line flex1" id="swCo">会社を切り替える</button>
+    <button class="btn ghost flex1" id="logout">この端末のPASSを忘れる</button>
+  </div>
+  <div class="acts"><button class="btn navy flex1" id="setClose">閉じる</button></div>
+</div>
+
+<div class="back hid" id="bkPl"></div>
+<div class="sheet hid" id="shPl">
+  <div class="grab"></div>
+  <h2>行き先を足す</h2>
+  <div class="form">
+    <label class="f">名前<input id="plName" type="text" placeholder="例: ○○冷蔵"></label>
+    <div class="f">種類<div class="seg wide" id="plKind"><button type="button" data-k="fac" class="on">建物・お店<small>1か所の行き先</small></button><button type="button" data-k="area">🚚 トラックを置く広場<small>地図にトラックを置く</small></button></div></div>
+    <div class="f">場所を、地図でタップ(いちばん近い道につながります)<div class="mapbox big" id="plBox"></div><span class="n" id="plHelp"></span></div>
+    <div class="msg" id="plMsg"></div>
+    <button class="btn navy" id="plSave">足す</button>
+  </div>
+  <div class="acts"><button class="btn line flex1" id="plClose">やめる</button></div>
+</div>
+
+<div class="back hid" id="bkMap"></div>
+<div class="sheet hid" id="shMap">
+  <div class="grab"></div>
+  <h2 id="mapTitle">停車位置</h2>
+  <p class="sub">オレンジの丸が、その柱です。</p>
+  <div class="mapbox" id="mapBox"></div>
+  <div class="acts"><button class="btn navy flex1" id="mapClose">閉じる</button></div>
+</div>
+
+<div class="lightbox hid" id="lb"><button id="lbX" aria-label="閉じる">✕</button><img id="lbImg" alt=""></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+/* ================= 会社(テナント)設定 =================
+ API_URL が空 = デモ版(この端末のブラウザ内だけに保存。サーバーに送らない)
+ 本番は API_URL に、会社別に分けた Apps Script のURLを入れる(gas/Code.gs)。 */
+var API_URL="https://script.google.com/macros/s/AKfycbyWhyTJqU49Q-1pkZrWQybBp9GgKdNHsCt2NnvCi_yDZhvPsdpQtJD5b0acqm-_82_Y/exec";
+var COMPANIES={
+  hinode:{name:"日の出本田水産",mark:"日",color:"#1f4e79",sub:"配達先さがし",desc:"仲卸 ・ 市場内",
+    market:"sapporo",map:{zones:["A","B","C","D"],dir:{A:1,B:-1,C:1,D:-1},start:"入口(ゲート側)"},seed:[]},
+  aoike:{name:"青池水産",mark:"青",color:"#1f6f8b",sub:"配達先さがし",desc:"仲卸 ・ 市場内",
+    market:"sapporo",map:{zones:["A","B","C","D"],dir:{A:1,B:-1,C:1,D:-1},start:"入口(ゲート側)"},seed:[]}
+};
+var gateId=null;var LOCK=null,CO=null,entries=[],editingId=null,pass="",tmpImgs=[],routeIds=[],routeDone={},routeMode="auto";
+try{var qc=new URLSearchParams(location.search).get("c");if(qc&&COMPANIES[qc])LOCK=qc}catch(e){}
+
+/* ---- 端末内の保存 ---- */
+// localStorage が使えない環境(プライベートモード等)では、開いている間だけ覚える(メモリ)
+var MEM={};
+function K(k){return "hs2_"+CO+"_"+k}
+function lg(k,d){try{var r=localStorage.getItem(K(k));return r?JSON.parse(r):d}catch(e){return (K(k) in MEM)?JSON.parse(MEM[K(k)]):d}}
+function ls(k,v){var j=JSON.stringify(v);try{localStorage.setItem(K(k),j)}catch(e){if(e&&/quota|full/i.test(e.name+e.message))return false;MEM[K(k)]=j}return true}
+function lsRaw(k){try{return localStorage.getItem(k)}catch(e){return MEM[k]||null}}
+function lsRawSet(k,v){try{localStorage.setItem(k,v)}catch(e){MEM[k]=v}}
+function lsRawDel(k){try{localStorage.removeItem(k)}catch(e){delete MEM[k]}}
+
+/* ---- API(デモ: この端末内 / 本番: Apps Script) ---- */
+function demoApi(b){
+  var items=lg("items",null);
+  if(items===null){items=COMPANIES[CO].seed.slice();ls("items",items);if(COMPANIES[CO].seedVer)ls("seedver",COMPANIES[CO].seedVer)}
+  else if(COMPANIES[CO].seedVer&&lg("seedver",0)!==COMPANIES[CO].seedVer){
+    var have={};items.forEach(function(x){have[x.id]=x});
+    COMPANIES[CO].seed.forEach(function(sd){var x=have[sd.id];if(!x){items.push(sd);return}
+      if(!x.spot&&!x.area&&(sd.spot||sd.area)){x.spot=sd.spot||"";if(sd.area){x.area=sd.area;if(sd.sky)x.sky=sd.sky;if(sd.out)x.out=sd.out;if(sd.door)x.door=sd.door}}});
+    ls("items",items);ls("seedver",COMPANIES[CO].seedVer)}
+  var real=lg("pass",COMPANIES[CO].pass);
+  if(String(b.pin)!==String(real))return {ok:false,error:"bad_pin"};
+  if(b.action==="upsert"){var i=items.findIndex(function(x){return x.id===b.item.id});if(i>=0)items[i]=b.item;else items.push(b.item);if(!ls("items",items))return {ok:false,error:"storage_full",message:"端末の保存容量がいっぱいです。写真を減らしてください"}}
+  else if(b.action==="delete"){items=items.filter(function(x){return x.id!==b.id});ls("items",items)}
+  else if(b.action==="setPin"){ls("pass",b.newPin)}
+  return {ok:true,data:{items:items}};
+}
+function api(body){
+  body.company=CO;
+  if(!API_URL)return Promise.resolve(demoApi(body));
+  return fetch(API_URL,{method:"POST",body:JSON.stringify(body)}).then(function(r){return r.json()}).catch(function(e){return {ok:false,error:"network",message:String(e)}});
+}
+
+/* ---- 写真(本番: サーバーに "ph:<ID>" の形で保存し、表示するときに1枚ずつ取りに行く。デモ: 端末内に写真そのもの) ---- */
+var PHC={},PHL={},PH_BLANK="data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+function isRef(u){return String(u).indexOf("ph:")===0}
+function phImg(u,attrs){return '<img src="'+(isRef(u)?(PHC[u]||PH_BLANK):u)+'"'+(isRef(u)?' data-ph="'+esc(u)+'"'+(PHC[u]?'':' class="ph-wait"'):'')+' '+(attrs||'')+'>'}
+function loadPh(root){if(!root)return;Array.prototype.forEach.call(root.querySelectorAll("img[data-ph]"),function(im){var u=im.getAttribute("data-ph");if(PHC[u]){im.src=PHC[u];im.classList.remove("ph-wait");return}if(PHL[u])return;PHL[u]=1;
+  api({action:"photo",id:u,pin:pass}).then(function(r){delete PHL[u];if(r&&r.ok&&r.data&&r.data.src){PHC[u]=r.data.src;Array.prototype.forEach.call(document.querySelectorAll("img[data-ph]"),function(x){if(x.getAttribute("data-ph")===u){x.src=PHC[u];x.classList.remove("ph-wait")}})}})})}
+
+/* ================= ゲート ================= */
+function show(id){["gateCo","gatePass","app"].forEach(function(x){$("#"+x).classList.toggle("hid",x!==id)})}
+function chooseCo(){
+  var keys=Object.keys(COMPANIES),last=lsRaw("hs2_last");if(keys.indexOf(last)<0)last=keys[0];
+  $("#coList").innerHTML='<div class="co-pull"><label for="coSel">会社を選ぶ</label><select id="coSel">'+keys.map(function(k){return '<option value="'+k+'"'+(k===last?' selected':'')+'>'+esc(COMPANIES[k].name)+'</option>'}).join("")+'</select></div>'
+    +'<div class="co-desc" id="coDesc"></div><div class="acts"><button class="btn main flex1" id="coGo">この会社で入る</button></div>';
+  function desc(){var c=COMPANIES[$("#coSel").value];$("#coDesc").innerHTML='<span class="mk" style="background:'+c.color+'">'+esc(c.mark)+'</span><span>'+esc(c.desc)+'</span>'}
+  $("#coSel").onchange=desc;desc();
+  $("#coGo").onclick=function(){enterCo($("#coSel").value)};
+  show("gateCo");
+}
+function setTheme(){
+  var c=COMPANIES[CO],r=document.documentElement;
+  r.style.setProperty("--co",c.color);
+  document.title=c.name+" | "+c.sub;
+  $("#coName").textContent=c.name;$("#coSub").textContent=c.sub;
+}
+function enterCo(code){
+  CO=code;setTheme();
+  lsRawSet("hs2_last",code);
+  var saved=lsRaw("hs2_pass_"+CO);
+  if(saved){login(saved,true);return}
+  askPass();
+}
+function askPass(){
+  var c=COMPANIES[CO];
+  $("#pMark").textContent=c.mark;$("#pMark").style.background=c.color;$("#pName").textContent=c.name;
+  $("#passErr").textContent="";$("#passIn").value="";
+  $("#passHint").textContent=API_URL?"":"(デモ用のPASS: "+lg("pass",c.pass)+")";
+  $("#passBack").classList.toggle("hid",!!LOCK);
+  show("gatePass");setTimeout(function(){$("#passIn").focus()},80);
+}
+function login(p,silent){
+  $("#passGo").disabled=true;
+  api({action:"list",pin:p}).then(function(res){
+    $("#passGo").disabled=false;
+    if(res&&res.ok){
+      pass=p;lsRawSet("hs2_pass_"+CO,p);
+      entries=fixE((res.data&&res.data.items)||[]);persistFix();
+      routeIds=lg("route",[]);routeDone=lg("done",{});routeMode=lg("mode","auto");gateId=lg("gate",null);
+      startApp();
+    }else if(res&&res.error==="no_pin"&&!silent){
+      if(p.length<4){$("#passErr").textContent="この会社は、まだPASSが決まっていません。4文字以上で入れると、それがPASSになります";return}
+      api({action:"initPin",newPin:p}).then(function(r2){if(r2&&r2.ok)login(p,false);else $("#passErr").textContent="PASSを決められませんでした"});
+    }else if(res&&res.error==="bad_pin"){
+      lsRawDel("hs2_pass_"+CO);
+      askPass();if(!silent)$("#passErr").textContent="PASSが違います";else $("#passErr").textContent="PASSが変更されています。もう一度入れてください";
+    }else{
+      $("#passErr").textContent="つながりませんでした。電波のある場所でもう一度";askPass();
+    }
+  });
+}
+$("#passGo").onclick=function(){var p=$("#passIn").value.trim();if(!p){$("#passErr").textContent="PASSを入れてください";return}login(p,false)};
+$("#passIn").addEventListener("keydown",function(e){if(e.key==="Enter")$("#passGo").click()});
+$("#passBack").onclick=chooseCo;
+
+/* ================= 本体 ================= */
+function startApp(){
+  show("app");$("#sync").classList.add("hid");
+  $("#q").value="";switchTab("search");renderAll();
+}
+function renderAll(){renderResults();renderRoute();renderBadge();renderAllList();renderBackup()}
+
+/* ---- 検索 ---- */
+function norm(s){if(!s)return"";return String(s).toLowerCase().replace(/\s+/g,"").replace(/[ァ-ヶ]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0x60)}).replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0)})}
+function names(e){return [e.name].concat(e.aliases||[]).filter(Boolean)}
+function search(q){
+  var n=norm(q);if(!n)return[];var out=[];
+  entries.forEach(function(e){var best=-1;names(e).forEach(function(c){var nc=norm(c);if(!nc)return;if(nc===n)best=Math.max(best,100);else if(nc.indexOf(n)>=0||n.indexOf(nc)>=0)best=Math.max(best,50+Math.min(nc.length,n.length))});if(best>=0)out.push({e:e,s:best})});
+  out.sort(function(a,b){return b.s-a.s});return out.map(function(x){return x.e});
+}
+function row(k,v,cls){var has=v&&String(v).trim();return '<div class="k">'+k+'</div><div class="v '+(cls||"")+(has?"":" empty")+'">'+(has?esc(v):"未登録")+'</div>'}
+function card(e){
+  var al=(e.aliases||[]).join("、");
+  var inRoute=routeIds.indexOf(e.id)>=0;
+  return '<article class="ft" data-id="'+esc(e.id)+'"><div class="head"><div><div class="nm">'+esc(e.name)+'</div>'+(al?'<div class="al">呼び名: '+esc(al)+'</div>':'')+'</div></div>'+
+   (e.time?'<div class="time"><small>時間</small><b>'+esc(e.time)+'</b></div>':'')+
+   '<div class="rows">'+
+    '<div class="k">停車位置</div><div class="v">'+(isSky(e)?'<button class="spot spot-b sky-b" data-skymap="'+esc(e.id)+'">🚚 '+esc(skyName(e))+'</button> <small class="sub">タップで地図</small>':isOut(e)?'<button class="spot spot-b out-b" data-outmap="'+esc(e.id)+'">🏢 場外 '+esc((facOf(e.out)||{}).name||"")+(e.door?'('+esc(e.door)+')':'')+'</button> <small class="sub">タップで地図</small>':e.spot?'<button class="spot spot-b" data-map="'+esc(e.spot)+'">'+esc(normSpot(e.spot))+'</button>'+(mk()?' <small class="sub">タップで地図</small>':''):'<span class="empty">未登録</span>')+'</div>'+
+    row("車",e.car)+row("場所",e.loc)+(e.note&&e.note.trim()?row("メモ",e.note,"note"):"")+'</div>'+
+   (e.imgs&&e.imgs.length?'<div class="thumbs">'+e.imgs.map(function(u,i){return phImg(u,'alt="写真'+(i+1)+'" data-lb="'+i+'"')}).join("")+'</div>':'')+
+   '<div class="acts"><button class="btn '+(inRoute?"line":"main")+' flex1" data-add="'+esc(e.id)+'">'+(inRoute?"✓ ルートに入っています":"＋ ルートに入れる")+'</button><button class="btn line" data-edit="'+esc(e.id)+'">編集</button></div></article>';
+}
+function renderResults(){
+  var q=$("#q").value,box=$("#results");
+  if(!q.trim()){
+    box.innerHTML=entries.length?'<div class="idle">名前を入れると配達先が出ます<br><b>'+entries.length+'件</b> 登録されています</div>':'<div class="empty-state"><div class="big">📦</div>まだ登録がありません。<br>下の「＋登録」から入れてください。</div>';
+    return;
+  }
+  var f=search(q);
+  if(!f.length){box.innerHTML='<div class="empty-state"><div class="big">🔍</div>「'+esc(q)+'」に合う配達先がありません。<br><button class="btn main" id="qAdd">この名前で登録する</button></div>';$("#qAdd").onclick=function(){openForm(null,q)};return}
+  box.innerHTML=f.map(card).join("");
+  bindCards(box);loadPh(box);
+}
+function bindCards(box){
+  Array.prototype.forEach.call(box.querySelectorAll("[data-edit]"),function(b){b.onclick=function(){var e=byId(b.getAttribute("data-edit"));if(e)openForm(e)}});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-add]"),function(b){b.onclick=function(){addRoute(b.getAttribute("data-add"));renderResults()}});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-map]"),function(b){b.onclick=function(){showMap(b.getAttribute("data-map"))}});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-skymap]"),function(b){b.onclick=function(){showSkyMap(b.getAttribute("data-skymap"))}});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-outmap]"),function(b){b.onclick=function(){showOutMap(b.getAttribute("data-outmap"))}});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-lb]"),function(im){im.onclick=function(){$("#lbImg").src=im.src;$("#lb").classList.remove("hid")}});
+}
+function byId(id){return entries.find(function(x){return x.id===id})}
+$("#q").addEventListener("input",renderResults);
+$("#lbX").onclick=$("#lb").onclick=function(){$("#lb").classList.add("hid")};
+
+/* ---- 市場の地図(柱の座標。CEO確認済み 2026-10-14) ---- */
+var PILLARS={"A-1":[464,305.7],"A-2":[452.5,292.2],"A-3":[441.1,278.9],"A-4":[430.8,266.9],"A-5":[418.8,252.8],"A-6":[408.3,240.4],"B-1":[455.4,313.2],"B-2":[443.9,299.8],"B-3":[432.5,286.5],"B-4":[422.3,274.5],"B-5":[410.2,260.4],"B-6":[399.7,248],"B-7":[389.1,235.6],"C-1":[445.4,322.1],"C-2":[433.9,308.7],"C-3":[422.5,295.4],"C-4":[412.2,283.3],"C-5":[400.2,269.3],"C-6":[389.7,256.9],"C-7":[379.1,244.5],"D-1":[438.1,328.6],"D-2":[426.6,315.2],"D-3":[415.2,301.8],"D-4":[404.9,289.8],"D-5":[392.9,275.7],"D-6":[382.4,263.4],"D-7":[371.8,251],"D-8":[360.2,237.5],"E-1":[428.2,337.3],"E-2":[416.7,323.9],"E-3":[405.4,310.5],"E-4":[395.1,298.5],"E-5":[383.1,284.4],"E-6":[372.5,272.1],"E-7":[361.9,259.7],"E-8":[350.4,246.2],"F-1":[419.7,344.8],"F-2":[408.2,331.4],"F-3":[396.8,318.1],"F-4":[386.6,306],"F-5":[374.5,292],"F-6":[364,279.6],"F-7":[353.4,267.2],"F-8":[341.9,253.7],"F-9":[329.7,239.5],"G-1":[411.5,352.1],"G-2":[400,338.7],"G-3":[388.6,325.3],"G-4":[378.3,313.3],"G-5":[366.3,299.2],"G-6":[355.8,286.9],"G-7":[345.2,274.5],"G-8":[333.7,261],"G-9":[321.5,246.8],"H-1":[400.8,361.5],"H-2":[389.3,348.1],"H-3":[377.9,334.8],"H-4":[367.7,322.8],"H-5":[355.7,308.7],"H-6":[345.1,296.3],"H-7":[334.5,283.9],"H-8":[323,270.4],"H-9":[310.9,256.2],"I-1":[393.4,368.1],"I-2":[381.9,354.6],"I-3":[370.6,341.3],"I-4":[360.3,329.3],"I-5":[348.3,315.2],"I-6":[337.7,302.9],"I-7":[327.1,290.4],"I-8":[315.6,277],"I-9":[303.5,262.8],"J-1":[385.4,375.2],"J-2":[373.9,361.7],"J-3":[362.5,348.4],"J-4":[352.3,336.4],"J-5":[340.2,322.3],"J-6":[329.7,310],"J-7":[319.1,297.5],"J-8":[307.6,284.1],"J-9":[295.4,269.9],"K-1":[376.1,383.4],"K-2":[364.6,370],"K-3":[353.2,356.7],"K-4":[342.9,344.6],"K-5":[330.9,330.6],"K-6":[320.4,318.2],"K-7":[309.8,305.8],"K-8":[298.2,292.3],"L-1":[367.7,390.8],"L-2":[356.2,377.4],"L-3":[344.9,364.1],"L-4":[334.6,352],"L-5":[322.6,338],"L-6":[312,325.6],"L-7":[301.4,313.2],"M-1":[360.2,397.5],"M-2":[348.7,384],"M-3":[337.3,370.7],"M-4":[327.1,358.7],"M-5":[315,344.6],"M-6":[304.5,332.3],"N-1":[351.6,405.1],"N-2":[340.1,391.6],"N-3":[328.7,378.3],"N-4":[318.5,366.3],"O-1":[341.8,413.8],"O-2":[330.3,400.3],"O-3":[318.9,387]};
+var GATES=[{id:1,p:[297.5,154.3]},{id:2,p:[351.7,149]},{id:3,p:[401.6,148.3]},{id:4,p:[530.9,250]},{id:5,p:[504.6,276.7]},{id:6,p:[417.8,241.6]},{id:7,p:[334.3,235.4]},{id:8,p:[297,195.4]}];
+/* 周りの道・建物(背景)。© OpenStreetMap contributors (ODbL) のデータを、敷地図の座標に直したもの */
+var BG_SAPPORO={"roads":[[1,"44,-689.2 47.2,-672 24.1,-493.4 22.5,-467.8 30.9,-442.7 126.3,-260.3 134.7,-242.1 140.9,-222.5 145.4,-199.7 148.3,-175.6 147.2,-155.9 143.9,-134.6 138.6,-113.5 128.9,-89.8 115.7,-66.8 66.2,6.2 61.4,19.1 58.3,35.2"],[1,"438.3,-32.6 438,-19.6 447.1,141.4"],[1,"1062.4,106.5 723.5,434.7"],[0,"441.5,39.9 819.1,18.4 942.2,15.8 1029.7,9.7"],[0,"511.3,559.1 495.1,663.5 498.9,668.6 721.6,898.5 759.1,962.4 937.4,1147.1 943.4,1157.4 1023.3,1240.4 1042,1256.8 1562.8,1807"],[1,"627.8,527.4 1554.6,1483.3"],[0,"1376.4,915.4 638.9,155 632.5,145.7 626.2,131.4"],[0,"804.6,1097.6 714.8,1005.6 674.4,943.3 384.6,644.5 368.3,635.1 235.7,613.6"],[0,"766.8,671.2 672,764.1"],[0,"717.2,812 626.4,717.8"],[0,"1058.2,203.8 674,575.1"],[0,"1150.9,299.4 766.8,671.2"],[0,"674,575.1 537,707.7"],[0,"495.1,663.5 415.3,756.7 410.1,760.4 403.7,763.5 329.4,782.2"],[0,"585.7,660.3 502.6,613"],[0,"1199.6,158 1147.5,209.9 816.5,530.3 626.4,717.8 482.8,857"],[0,"492,848 355.1,700.6 408.3,536.6"],[0,"355.1,700.6 203.4,737.6 172.1,734.1 54.9,724.9"],[0,"627.8,527.4 592.4,493.2 575.6,494.9 523.6,442.1"],[0,"542.6,136.3 542.6,146.5 491.8,195.6"],[0,"857.8,118.4 523.6,442.1"],[0,"511.3,559.1 535.3,453.8"],[0,"960.9,112.4 677.3,386.8"],[0,"519.2,521.9 456.8,506.2 429.4,492.8"],[0,"502.6,613 387.6,599.5"],[0,"757.3,124 584.4,291.1"],[0,"404.1,535.7 412.6,506.5 493.6,440.6 503,438.2 512.4,437.9 523.6,442.1"],[0,"635.1,149.9 537.2,242.6 331.7,441.1 323.9,450.5 301.3,483.8 295.4,498.3 292,511.5"],[0,"182.8,371.6 169.8,372.7 84.5,367"],[0,"153.9,306 92.7,298.6 5.8,290.2"],[0,"-9.6,412 5.8,290.2 17.7,167.9 65.5,163.4 78.7,164.7"],[0,"74.6,443.4 92.7,298.6"],[0,"50.2,103.9 -252,120.8"],[1,"-1691.1,43.1 -1587.6,52.8 -1485.5,66.3 -1333.6,82.4 -1250.4,93.5 -1045.9,107.2 -1033.4,105.9 -977.8,105.1 -828,104.5 -685.1,99.2 -71.6,64 -0.1,49.5 46.9,38"],[1,"723.5,434.7 591.8,562.3 586.2,566.7 572.6,571 565.6,570.6 511.3,559.1 211.6,494"],[1,"723.5,434.7 1280.5,1009"],[0,"634.6,29 640.1,130.7"],[1,"273.4,858.8 199.2,490.6"],[1,"199.2,490.6 136.7,466.1 -9.6,412 -35.8,408.6 -273.9,387.7"],[1,"199.2,490.6 170.2,374.8 155.9,310.7 139.9,279.9 75.2,180.2 56.3,144.9 52.8,131.7 51.3,118.4 46.9,38"],[1,"447.1,141.4 1062.4,106.5"],[1,"447.1,141.4 451.2,152.1 456,158.6 723.5,434.7"],[1,"46.9,38 49,20.8 54.8,10.4 59.2,-4.9 106.1,-73.1 118,-94 127.1,-115.8 132.7,-136 135.9,-159.5 136.4,-182.7 134.3,-198.5 129.4,-220.6 118.6,-249.2 19.1,-441.1 11.9,-470.2 13.7,-497.5 35.3,-668.9 44,-689.2"],[1,"46.9,38 58.3,35.2"],[1,"58.3,35.2 62.6,116.5 64.5,130.4 68.9,144.3 78.7,164.7 149.8,273.5 164,300.3 166.8,307.6 182.8,371.6 211.6,494"],[1,"58.3,35.2 300.9,-24.2 322.2,-27.3 438.3,-32.6"],[1,"211.6,494 199.2,490.6"],[1,"211.6,494 258.1,724.3 289.9,871 297,915.4 340.4,1131.6 373.2,1363.8 376.4,1399 381.5,1420.9 393.1,1448.3 410.8,1473.2 625.3,1700.8"],[0,"677.3,386.8 570.7,489.6"]],"blocks":["740.3,434.9 773.3,469.4 785.4,457.5 753.2,423.4","751.1,241.8 758.6,249.7 785.7,224.4 777.7,216.2","742.2,367.8 756.9,382.7 781.1,359.2 766.6,344.2","740,340.7 753.7,354.9 783.2,326.5 768.9,312.5","695.7,378.2 703,385.6 711.7,376.9 720.5,385.7 727.9,378.4 711.8,362.2","701.2,389.5 709.4,397.3 719.4,387.4 711.6,379.5","724,299.2 740.5,316.1 755.2,301.8 738.5,285.5","740.7,148.4 755.2,162.5 768.5,149.2 761.3,142 758.9,144.3 755,140.2 759.5,135.4 755.4,134","720.7,181.3 727.6,189 754,163.9 746.9,156.3 735.7,167.1 729.9,161.3 725.2,166 730.8,171.6","712.2,213.6 723.6,224.7 742,206.7 730.4,195.4","641.1,244.7 659.5,264.6 674.7,249.6 656.3,229.7","621.5,266 646.5,290.4 647.8,289.1 655.4,297.8 659.4,294 651.8,285.6 665.5,272.4 641.6,247.1","653.1,285.8 656,288.9 684.4,261.4 676.5,253.2 661.4,267.1 666.7,272.6","619.3,311 630.4,321 633.8,320.7 642.1,312.3 633.9,303.6 637.2,300.5 633.6,296.9","659.9,154 687.3,182.5 726.7,144 719.5,136.7 703.8,137.6 696.9,144.3 690.9,138.2 682.5,145.7 676.4,138.7","633.3,206.6 647.2,221 661.3,207.4 657.5,203.4 663.6,197.6 659.6,193.4 655.2,197.6 649.1,191.3","608,201.1 615,208.3 644.9,179.4 636.1,170.4 617.4,188.6 619.1,190.4","580.1,220 589.8,230 610.4,210.2 600.6,200.2","558.3,246 588.8,277.2 594.7,271.5 587,263.6 602.7,248.3 579.9,225","536.7,170.7 560.2,196.2 610,148.8 610.3,143.5 586.5,144.5 585.5,150.1 555.7,152","533.8,175.3 562,203.8 551.8,213.8 523.7,185.3","482.9,172.5 493.1,182.8 518.6,158.3 509.2,148.7","736.4,64.1 737.2,80.9 753.3,79.8 751.8,63.2","710,79.5 711.1,108.9 736.1,107.9 735.1,78.2","644.1,85.4 645.2,115.7 653.7,114.1 653.1,85","571.5,82.8 572.9,98.2 611.4,96.1 612.7,117.1 623.9,116.2 622.1,80","475.2,77.7 476.5,108.3 478.5,108.2 478.2,112.4 489.2,110.4 488.4,76.9","454.7,110 454.9,117.2 473.5,116.1 473.3,109.2","453.8,78.5 455.3,100.4 473.5,100 473.2,77.7","769,630.9 782.4,644.6 792.5,634.5 779.5,621.4","758.6,606.4 775.4,623.3 780.8,617.5 764.3,601","743.4,631.7 754.1,643.1 762.6,634.8 752.1,623.6","749.2,697.9 758.6,707.7 765.2,701.3 766.5,702.7 773.4,696 764.8,687.2 756.9,694.8 754.7,692.5","734.6,708.3 745.3,719.2 752,712.7 741.3,701.7","721.9,679.2 732.9,690.1 751.1,672.3 740.8,661","706.6,693.1 712.6,699.1 723.1,688.8 717.2,682.8","691.7,683.8 697.8,689.9 712.1,676.5 706,670.1","683.7,673.1 690.2,679.8 699.6,670.7 693.4,664.2","752.7,559.3 760.5,567.5 771.1,557 763.3,549","732.2,538.2 741.5,547.4 752.6,536.6 743.4,527.3","713.8,545.3 720.8,552.7 729.3,544.2 722.1,537","722.5,553.2 729.3,560.1 738.2,551.4 731.3,544.5","714.7,594.4 723.8,603.8 727.1,600.6 725.2,598.7 732.2,591.9 725,584.5","693,565.3 699.7,572.3 696.8,575 703.6,581.6 709.2,576 707.8,574.6 712.2,570 714.9,572.1 719,568 708.7,557.5 702.2,563.9 698.4,560.2","730.5,482.4 744.9,498.1 758,485.8 751.5,479.1 748,481.6 744.2,477.5 746.3,475 742.7,471.2","711,462 729.3,481 741.6,469.3 725.3,452.4 721.1,452.6","700.3,477.6 707.5,485.2 718.4,474.9 709.9,465.4 705.5,469.6 706.5,471.4","703.8,508.9 713.3,518.4 725.5,506.2 716.2,496.7","696.3,484.8 711,499.7 715.4,495.3 701.5,480.7","685.9,490.9 700.8,506.6 708.5,499.1 696.3,487.1 692.7,490.4 689.6,487.5","690.5,521.5 696.6,527.7 706.8,517.7 700.6,511.6","664.9,528.3 672.3,536.5 687.4,521.8 679.8,514","673.3,622.1 692.3,642 706,629.7 706.5,625.7 688.6,607.1","659.9,600.6 676.4,617 688,606.2 671.9,589.1","650.6,611.1 666,626.6 675.3,617.7 660,602.1","637.3,577.3 650.5,591.5 659.2,583.5 650.3,573.9 652.9,571.5 648.6,566.9","596.2,583.4 612.1,598.9 635.7,575.9 628.6,568.2 640.7,557.2 633,549.3","582,527.7 582.1,537.1 584,539.2 597.3,526.9 599.1,528.8 609.6,519.1 601.2,510","677,444 687,454.2 697,444.5 686.9,434.3","683.6,428.4 693.1,438.4 699.7,432.5 690.2,422.4","543.6,456.1 554.4,466.8 596.4,426 585.5,414.9 571,429.1 566.2,429.8 545.4,450.2 547.5,452.3","566.9,456.9 578,468.2 583.8,463.2 586.4,466.2 611.6,442.4 597.2,428.6","582.4,409.9 593.7,421.3 600.6,414.8 589.3,403.3","594.7,422.6 605.9,433.6 612.3,427.1 601.2,415.9","590.5,402 601.5,413.5 608.2,407.2 597.4,395.7","602.4,415 613.4,425.7 620,419 609.1,408.3","617,391.3 621.8,396.4 625.1,393.3 635.8,403.9 641.6,398.3 625.8,382.7","593,389.9 604.4,401.6 626.9,379.8 615.6,368.5","574.6,339.2 581.9,346.9 602.6,327 595.2,319.4","559.8,352.5 568.8,361.9 567.5,363.2 576.7,372.8 578.3,371.3 579.6,372.6 591.8,360.9 572.3,340.5","535.8,354 544.8,363.2 543.2,365.3 560.9,383.3 572.1,372.5 545.6,344.8","545.8,304 553.5,312.8 572.6,294.9 560.1,282.1 544.5,297.9 547.7,301.8","490.1,305.5 524.6,340.7 553,313.6 518.3,278.6","443.3,348.2 496.3,402.7 532.9,366.7 503.9,335.7 503.7,330.6 483.3,310.2","659.5,-31.6 662.1,19.9 679.6,19.9 676.2,-32.3","570.2,-27.8 574.5,12.4 587.7,10.7 587.3,2.7 589.2,1.9 586.8,-21.3 576.9,-20.1 576.6,-27.9","659,230.8 678.9,251.3 690.3,239.9 686.6,236 687.6,235.1 675.9,222.9 677.6,221.1 673.5,216.7","599,290.7 616.8,309.2 640,286.9 632.5,278.8 617.3,293.5 614.2,290.2 612.5,292.1 605.6,284.7","659.6,95.4 661.2,118.2 693.9,116.5 692.5,93.5","742.1,93.9 743.2,113.7 842.8,107.1 842.1,88.2 855.9,86.9 854.9,61.3 840.5,62.1 841,71.2 829.5,72.2 830.7,90.3 748.4,95.5 748.3,93.5","706.5,402.2 709.2,405 712.2,402 723.2,413.8 725.9,413.8 729.3,410.1 731.8,412.4 737.4,406.8 720.2,388.9","745.2,551.2 752.2,555 761.4,545.8 755,539.3 745.2,547.6 746.7,549.5","759.3,501.8 761.9,501.3 781.1,520.4 781.3,522.7 787,527.3 788.2,526.7 792.6,531.9 791.7,536.6 786.5,541 781.2,542.1 778.4,540.3 752.9,512.6 755.7,505.2","648.1,487.5 632.6,502.4 617.2,486.5 632.7,471.6","670.3,444.5 664.5,450.2 675.6,461.5 681.4,455.9","656.3,347.5 680.3,372.5 725.2,329.5 701.1,304.5"],"credit":"© OpenStreetMap contributors (ODbL)"};
+var MARKETS={sapporo:{key:"sapporo",bg:BG_SAPPORO,name:"場内駐車場",rule:"sweep",defaultGate:6,gates:GATES,poly:[[288,235],[404,233],[480,306],[336,430],[318,424]],pillars:PILLARS,
+  // 道の途中の点(敷地図上の座標)。R0=一方通行の南西の端、R2=南東の端、W*=青果棟との間の西の道、C*=水産棟の北東をまわる道
+  extra:[{id:"C1",p:[450,155]},{id:"C2",p:[498,182]},{id:"R0",p:[306.2,232.9]},{id:"R2",p:[469.8,315.3]},
+         {id:"W0",p:[284,165]},{id:"W1",p:[283,196]},{id:"W2",p:[282,236]},{id:"W3",p:[283,270]},{id:"W4",p:[286,298]},{id:"S1",p:[352,129]},{id:"S2",p:[402,129]},{id:"Z7",p:[255,120]},{id:"Z4",p:[44.9, 199.9]},{id:"Z6",p:[39.9, 355.6]},{id:"Z3",p:[632.8, 591.9]},{id:"Z8",p:[610.8, 576.0]},{id:"Z9",p:[579.9, 362.8]},{id:"Z5",p:[-1.6, 181.5]}],
+  // 道のつながり。3つ目が1なら一方通行(左→右の向きだけ)。
+  // 一方通行(CEO確認 2026-10-14): 南東の端 R2 → 出入口6(角) → 出入口7 → 南西の端 R0。ポンポンも守る。それ以外の道は両方向。
+  links:[["G1","G2"],["G2","G3"],["G3","C1"],["C1","C2"],["C2","G4"],["G4","G5"],["G5","R2"],
+         ["G1","W0"],["W0","W1"],["W1","G8"],["W1","W2"],["W2","W3"],["W3","W4"],["R0","W2"],
+         ["S1","G2"],["S2","G3"],["S1","S2"],["S2","C1"],["Z7","S1"],["R2","G6",1],["G6","G7",1],["G7","R0",1]],
+  // 駐車場に入れる口: 西の道の先(W4)と、南東の端(R2)だけ。(水産棟の南側の道からは、柵などで入れない扱い)
+  entries:["W4","R2"],
+  // 青空駐車場(水産棟の北側。CEOが丸で囲んだ範囲、2026-10-14)。番号はなく、地図にトラックを置いて場所を決める。中は自由に動ける。
+  sky:{name:"青空駐車場",zones:[
+    {id:"n",kw:["青空"],both:true,name:"エス・ケー・ライン(北)・青空駐車場",poly:[[85.9,141.1],[83.2,96.0],[84.5,95.7],[228.0,88.0],[250.7,86.9],[295.5,88.8],[341.3,88.8],[341.3,73.8],[458,73.8],[458,127.5],[295.5,127.5],[255.5,129.5]],entry:["S1","S2","Z7"]},
+    {id:"z4",kw:["SKLINE","エスケー","エスケイ","ファミマ"],outer:true,no:"①",name:"エス・ケー・ライン(D)",poly:[[23.6,214.2],[23.4,204.6],[28.4,174.7],[47.9,173.3],[55.4,180.7],[62.6,200.8],[62.1,216.2],[58.6,217.6],[42.2,216.9]],entry:["Z4"]},
+    {id:"z6",kw:["ホクレン","ダイイチのゾーン"],outer:true,no:"②",name:"ホクレン",poly:[[12.3,396.5],[12.9,385.4],[19.7,320.6],[25.4,305.3],[64.2,308.8],[73.8,311.3],[75.8,317.1],[63.3,405.2],[30.9,404.5],[20.3,401.8]],entry:["Z6"]},
+    {id:"z3",kw:["マキシム"],outer:true,no:"③",name:"マキシム",poly:[[623.4,594.2],[633.1,572.7],[641.6,591.0],[636.1,600.0],[629.9,601.4]],entry:["Z3"]},
+    {id:"z8",kw:["イオン"],outer:true,no:"④",name:"イオン",poly:[[590.2,576.3],[608.1,561.8],[614.8,562.6],[621.2,568.2],[625.7,575.0],[625.9,579.3],[612.3,590.9],[607.8,592.1],[591.4,578.2]],entry:["Z8"]},
+    {id:"z9",kw:["マルサンミカミ","マルサン"],outer:true,no:"⑤",name:"マルサンミカミ",poly:[[564.9,364.3],[570.0,357.3],[578.0,349.4],[602.0,354.7],[595.6,365.2],[577.5,375.4],[571.0,373.5]],entry:["Z9"]},
+    {id:"z5",kw:["東陸"],outer:true,no:"⑥",name:"東陸",poly:[[-26.0,206.3],[-38.5,186.2],[11.4,153.1],[17.6,159.7],[18.2,164.6],[16.1,177.5],[12.8,183.3],[-5.3,196.1],[-20.7,206.3]],entry:["Z5"]}]},
+  // 市場の周りの道(CEOが合体マップの上に描いた線、2026-10-14)。両方向(左側通行)。exits=市場から一般道へ出る口(緑の丸)。snap=この道に最寄りでつなぐ点。
+  roads:{nodes:{"Q0":[15.3,177.6],"Q1":[14.5,191.4],"Q2":[11.7,204.9],"Q3":[10.8,243.7],"Q4":[105.9,145.8],"Q5":[166.7,142.0],"Q6":[10.0,262.6],"Q7":[179.8,141.6],"Q8":[214.9,141.6],"Q9":[6.9,278.0],"Q10":[2.2,291.0],"Q11":[227.6,143.2],"Q12":[240.6,142.8],"Q13":[4.3,339.5],"Q14":[263.7,142.5],"Q15":[276.8,142.1],"Q16":[305.3,139.8],"Q17":[373.9,137.6],"Q18":[291.0,160.9],"Q19":[293.3,174.4],"Q20":[296.3,189.0],"Q21":[406.2,136.1],"Q22":[299.3,223.6],"Q23":[296.5,237.1],"Q24":[321.8,285.2],"Q25":[373.9,338.7],"Q26":[383.3,184.5],"Q27":[398.3,189.5],"Q28":[380.6,197.9],"Q29":[410.4,376.0],"Q30":[594.3,195.8],"Q31":[560.3,230.0],"Q32":[529.3,268.8],"Q33":[504.6,296.9],"Q34":[554.0,270.8],"Q35":[497.2,308.4],"Q36":[475.2,328.0],"Q37":[565.9,261.2],"Q38":[622.2,338.5],"Q39":[357.0,431.4],"Q40":[323.4,468.6],"Q41":[311.8,481.3],"Q42":[297.2,484.4],"Q43":[312.5,502.5],"Q44":[317.1,514.4],"Q45":[339.8,525.9],"Q46":[633.4,347.8],"Q47":[353.2,528.6],"Q48":[365.9,530.2],"Q49":[678.6,390.9],"Q50":[377.8,535.6],"Q51":[390.5,537.1],"Q52":[402.8,550.6],"Q53":[396.6,566.4],"Q54":[393.9,579.8],"Q55":[705.5,416.3],"Q56":[715.4,436.3],"Q57":[378.0,608.7],"Q58":[406.1,598.3],"Q59":[326.7,629.4],"Q60":[339.4,630.9],"Q61":[354.8,634.0],"Q62":[374.5,621.0],"Q63":[418.4,601.8],"Q64":[430.7,605.2],"Q65":[443.4,606.8],"Q66":[457.3,607.6],"Q67":[705.0,448.2],"Q68":[691.1,462.4],"Q69":[494.6,611.1],"Q70":[679.5,475.1],"Q71":[663.3,490.9],"Q72":[640.5,514.3],"Q73":[608.4,548.9],"Q74":[506.9,614.5],"Q75":[518.8,619.9],"Q76":[533.0,628.8],"Q77":[544.6,636.1],"Q78":[568.4,651.9],"Q79":[645.2,604.3],"Q80":[593.4,646.9],"X0":[85.1,149.6],"X1":[547.1,255.4],"X2":[296.0,500.1]},
+    links:[["Q0","Q1"],["Q1","Q2"],["Q2","Q3"],["Q4","Q5"],["Q3","Q6"],["Q5","Q7"],["Q7","Q8"],["Q6","Q9"],["Q9","Q10"],["Q8","Q11"],["Q11","Q12"],["Q10","Q13"],["Q12","Q14"],["Q14","Q15"],["Q15","Q16"],["Q16","Q17"],["Q15","Q18"],["Q18","Q19"],["Q19","Q20"],["Q17","Q21"],["Q20","Q22"],["Q22","Q23"],["Q23","Q24"],["Q24","Q25"],["Q26","Q27"],["Q26","Q28"],["Q28","Q27"],["Q25","Q29"],["Q30","Q31"],["Q32","Q33"],["Q32","Q34"],["Q33","Q35"],["Q35","Q36"],["Q36","Q29"],["Q37","Q34"],["Q37","Q38"],["Q29","Q39"],["Q39","Q40"],["Q40","Q41"],["Q42","Q41"],["Q43","Q44"],["Q44","Q45"],["Q38","Q46"],["Q45","Q47"],["Q47","Q48"],["Q46","Q49"],["Q48","Q50"],["Q50","Q51"],["Q51","Q52"],["Q52","Q53"],["Q53","Q54"],["Q49","Q55"],["Q55","Q56"],["Q54","Q57"],["Q54","Q58"],["Q59","Q60"],["Q60","Q61"],["Q57","Q62"],["Q62","Q61"],["Q58","Q63"],["Q63","Q64"],["Q64","Q65"],["Q65","Q66"],["Q56","Q67"],["Q67","Q68"],["Q66","Q69"],["Q68","Q70"],["Q70","Q71"],["Q71","Q72"],["Q72","Q73"],["Q69","Q74"],["Q74","Q75"],["Q75","Q76"],["Q76","Q77"],["Q77","Q78"],["Q79","Q80"],["Q80","Q78"],["X0","Q0"],["X0","Q4"],["X1","Q31"],["X1","Q34"],["X2","Q42"],["X2","Q43"]],
+    exits:["X0", "X1", "X2"],
+    snap:["G1","G2","G3","G4","G5","G8","R2","S1","S2","Z7","Z4","Z5","Z6","Z3","Z8","Z9"],snapMax:80},
+  // 周りの目印と道の名前(場外の地図に出す。位置はGoogleマップの画面を見て、自前で描いた略図用の座標にした)
+  landmarks:[{"t":"管理センター","p":[275.1,149.4]},{"t":"さっぽろ朝市","p":[509.5,353.1]},{"t":"さっぽろ青果館","p":[312.3,553.1]},{"t":"札中卸センター","p":[277.8,641.6]},{"t":"卸売センター","p":[414.3,586.6]},{"t":"札幌場外市場","p":[533.9,459.3]},{"t":"北の漁場1号店","p":[565.8,507.4]},{"t":"佐藤水産","p":[492.6,584.3]}],
+  roadnames:[{"t":"環状通","p":[191.4,333.5]},{"t":"環状通","p":[173.6,584.8]},{"t":"桑園・発寒通","p":[299.0,452.9]},{"t":"北12条西","p":[462.0,350.9]},{"t":"西20丁目通","p":[552.9,217.9]},{"t":"桑園・発寒通","p":[725.4,440.5]}],
+  // 場外の運び先(市場の外)。links=道のつながり(目安)。マルカセンターは店名で登録し、入口が右・真ん中・左の3つ。
+  outside:{facilities:[
+    {id:"o1",kw:["1冷","一冷","1号冷"],name:"1冷",p:[389.2,422],size:[26,22],links:["P:O-1","P:N-1"]},
+    {id:"o2",kw:["マルカ"],name:"マルカセンター",p:[466.8,343.4],size:[34,30],links:["R2"],doors:[{k:"左",dx:11},{k:"真ん中",dx:0},{k:"右",dx:-11}]},
+    {id:"o3",kw:["保冷"],name:"保冷センター",p:[554.8,163],size:[34,18],links:["G4"]}]},
+  oneway:[[469.8,315.3],[409.9,242.6],[334.3,235.4],[306.2,232.9]],
+  // 使わない場所(配達もしない駐車場。道にも数えない)
+  unused:[[[296.3,196.8],[288,234.8],[313,234.8]]]}};
+function gatePos(M){var g=M.gates.filter(function(x){return x.id===gateId})[0]||M.gates.filter(function(x){return x.id===M.defaultGate})[0];return g}
+/* ---- 場所の候補(場外の行き先)。会社ごとに、足す・名前を変える・消すができる。元からあるものは hidden/names で上書きする ---- */
+var PLS={},MK={};
+function pl(){if(!PLS[CO])PLS[CO]=lg("places",{added:[],hidden:[],names:{}});return PLS[CO]}
+function savePl(){ls("places",pl());MK[CO]=null;var c=COMPANIES[CO];if(c&&MARKETS[c.market])delete NETS[MARKETS[c.market].key+":"+CO]}
+function buildMarket(b,P){
+  var M=Object.assign({},b);M.key=b.key+":"+CO;
+  var nm=function(o){return P.names[o.id]?Object.assign({},o,{name:P.names[o.id]}):o},vis=function(o){return P.hidden.indexOf(o.id)<0};
+  var facs=P.added.filter(function(x){return x.kind==="fac"}),areas=P.added.filter(function(x){return x.kind==="area"});
+  M.outside={facilities:(b.outside?b.outside.facilities:[]).filter(vis).map(nm).concat(facs.map(function(f){return {id:f.id,name:f.name,p:f.p,size:[26,22],links:[],custom:true}}))};
+  M.sky=b.sky?{name:b.sky.name,zones:b.sky.zones.filter(vis).map(nm).concat(areas.map(function(a){return {id:a.id,outer:true,custom:true,name:a.name,poly:[[a.p[0]-25,a.p[1]-17],[a.p[0]+25,a.p[1]-17],[a.p[0]+25,a.p[1]+17],[a.p[0]-25,a.p[1]+17]],entry:["A:"+a.id]}}))}:null;
+  M.extra=b.extra.concat(areas.map(function(a){return {id:"A:"+a.id,p:a.p}}));
+  if(b.roads)M.roads=Object.assign({},b.roads,{snap:b.roads.snap.concat(areas.map(function(a){return "A:"+a.id}))});
+  return M;
+}
+function mk(){var c=COMPANIES[CO];if(!c||!MARKETS[c.market])return null;return MK[CO]||(MK[CO]=buildMarket(MARKETS[c.market],pl()))}
+function fw(c){return c.replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(x){return String.fromCharCode(x.charCodeAt(0)-0xFEE0)})}
+// 停車位置: D-4 / D4 / d４ / D－4 / 4D / D4付近 など、どの書き方でも「D-4」にそろえる
+function normSpot(t){var raw=String(t||"").trim(),x=raw.normalize("NFKC").toUpperCase().replace(/[ー−‐―]/g,"-").replace(/(付近|あたり|辺り|周辺|近く)\s*$/,"").trim();
+  var m=/^([A-Z])\s*[-\/・.]?\s*(\d{1,2})$/.exec(x);if(m)return m[1]+"-"+parseInt(m[2],10);
+  m=/^(\d{1,2})\s*[-\/・.]?\s*([A-Z])$/.exec(x);if(m)return m[2]+"-"+parseInt(m[1],10);
+  return raw}
+// 「場所の説明」「メモ」に書いてある柱の番号(D4 / 4D / D－4 / D4付近 など)を、停車位置として読み取る。番号が複数あるときは、先に書いてある方
+function findSpot(text){var M=mk();if(!M||!text)return "";var x=String(text).normalize("NFKC").toUpperCase().replace(/[ー−‐―]/g,"-"),hits=[],m,c;
+  var re1=/(^|[^A-Z0-9])([A-O])\s*[-\/・.]?\s*(\d{1,2})(?![0-9])/g;while((m=re1.exec(x))){c=m[2]+"-"+parseInt(m[3],10);if(M.pillars[c])hits.push([m.index,c])}
+  var re2=/(^|[^0-9])(\d{1,2})\s*[-\/・.]?\s*([A-O])(?![A-Z])/g;while((m=re2.exec(x))){c=m[3]+"-"+parseInt(m[2],10);if(M.pillars[c])hits.push([m.index,c])}
+  hits.sort(function(p,q){return p[0]-q[0]});return hits.length?hits[0][1]:""}
+// 「5の列」のように列の番号だけのときは、A〜H のまん中あたり(D)の柱として扱う(CEO確認 2026-10-14: 5の列=5のA〜Hのどこか)
+function findColumn(text){var M=mk();if(!M||!text)return "";var m=/(\d{1,2})\s*の?\s*列/.exec(String(text).normalize("NFKC"));if(!m)return "";var c="D-"+parseInt(m[1],10);return M.pillars[c]?c:""}
+var FIXED=[];
+function kata(t){return String(t).normalize("NFKC").replace(/[ぁ-ゖ]/g,function(c){return String.fromCharCode(c.charCodeAt(0)+96)}).toUpperCase().replace(/\s+/g,"")}
+// 場所の言葉(マルカセンター・保冷・SKライン・ホクレン・青空 など)から、行き先を見つける
+function findPlace(text){var M=mk();if(!M||!text)return null;var t=kata(text),best=null;
+  var test=function(kw,rec){(kw||[]).forEach(function(k){var i=t.indexOf(kata(k));if(i>=0&&(!best||i<best.i))best={i:i,rec:rec}})};
+  (M.outside?M.outside.facilities:[]).forEach(function(f){test(f.kw||[f.name],{out:f.id,fac:f})});
+  (M.sky?M.sky.zones:[]).forEach(function(z){test((z.kw||[]).concat(z.custom?[z.name]:[]),{zone:z})});
+  if(!best)return null;
+  if(best.rec.out){var f=best.rec.fac,r={area:"out",out:f.id};if(f.doors){r.door=/左/.test(t)?"左":/右/.test(t)?"右":f.doors[1].k}return r}
+  var z=best.rec.zone,cx=0,cy=0;z.poly.forEach(function(q){cx+=q[0];cy+=q[1]});cx/=z.poly.length;cy/=z.poly.length;
+  var h=0;String(text).split("").forEach(function(c){h=(h*31+c.charCodeAt(0))%997});
+  var tries=0,p;do{p=[cx+((h+tries*37)%11-5)*3,cy+((h*7+tries*53)%9-4)*3];tries++}while(!inPoly(p[0],p[1],z.poly)&&tries<30);
+  if(!inPoly(p[0],p[1],z.poly))p=[cx,cy];return {area:"sky",sky:[+p[0].toFixed(1),+p[1].toFixed(1)]}}
+function fixE(list){var M=mk();if(!M||!list)return list||[];list.forEach(function(e){if(!e.spot&&!e.area){var c=findSpot(e.loc)||findSpot(e.note)||findColumn(e.loc);if(c){e.spot=c;FIXED.push(e);return}
+  var pl=findPlace(e.loc)||findPlace(e.note);if(pl){e.area=pl.area;if(pl.out){e.out=pl.out;if(pl.door)e.door=pl.door}if(pl.sky)e.sky=pl.sky;FIXED.push(e)}}});return list}
+// 読み取った停車位置は、そのまま保存する(あとで直したいときは、編集で変えられる)
+function persistFix(){var L=FIXED.splice(0);var p=Promise.resolve();L.forEach(function(e){p=p.then(function(){return api({action:"upsert",item:e,pin:pass})})})}
+function pos(code){var M=mk();return M?(M.pillars[normSpot(code)]||null):null}
+function dist(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1])}
+/* ---- 道のつながり(柱の格子+出入口+周りの道+青空駐車場)。一方通行を守って、回って水産棟に戻る輪の最短を計算する ---- */
+var NETS={};
+function getNet(M){
+  if(NETS[M.key])return NETS[M.key];
+  var nodes={},adj={};
+  function add(id,p){nodes[id]=p;adj[id]=adj[id]||[]}
+  function edge(a,b,two){var w=dist(nodes[a],nodes[b]);adj[a].push([b,w]);if(two)adj[b].push([a,w])}
+  var L="ABCDEFGHIJKLMNO",pk=Object.keys(M.pillars);
+  pk.forEach(function(k){add("P:"+k,M.pillars[k])});
+  M.gates.forEach(function(g){add("G"+g.id,g.p)});
+  M.extra.forEach(function(e){add(e.id,e.p)});
+  pk.forEach(function(k){var li=L.indexOf(k.charAt(0)),n=+k.split("-")[1];
+    [[1,0],[0,1]].forEach(function(d){var k2=L.charAt(li+d[0])+"-"+(n+d[1]);if(li+d[0]<L.length&&M.pillars[k2])edge("P:"+k,"P:"+k2,true)})});
+  M.links.forEach(function(l){edge(l[0],l[1],l[2]!==1)});          // l[2]===1 は一方通行(a→bだけ)
+  // 駐車場に入れる口(出入口)だけ、近い柱につなぐ。緑の場所(使わない)や、道に面した柱からは入れない。
+  M.entries.forEach(function(id){var c=pk.map(function(k){return [dist(nodes[id],M.pillars[k]),k]}).sort(function(a,b){return a[0]-b[0]}).slice(0,3).filter(function(x){return x[0]<=40});
+    c.forEach(function(x){edge(id,"P:"+x[1],true)})});
+  if(M.outside)M.outside.facilities.forEach(function(f){
+    var ids=(f.doors||[{k:"",dx:0}]).map(function(d){var id="OUT:"+f.id+(d.k?":"+d.k:"");add(id,[f.p[0]+d.dx,f.p[1]-f.size[1]/2]);return id});
+    ids.forEach(function(id){f.links.forEach(function(t){if(nodes[t])edge(id,t,true)})});
+    for(var i=0;i<ids.length-1;i++)edge(ids[i],ids[i+1],true);
+  });
+  if(M.roads){var RD=M.roads;Object.keys(RD.nodes).forEach(function(k){add(k,RD.nodes[k])});RD.links.forEach(function(l){edge(l[0],l[1],true)});
+    // 道に近い点(出入口・青空駐車場の入口・場外の入口)を、いちばん近い道の上の点にとめる
+    var anchors=(RD.snap||[]).concat(Object.keys(nodes).filter(function(k){return k.indexOf("OUT:")===0}));
+    anchors.forEach(function(id){var p=nodes[id];if(!p)return;var best=null;
+      RD.links.forEach(function(l){var a=nodes[l[0]],b=nodes[l[1]],dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L)),q=[a[0]+t*dx,a[1]+t*dy],d=dist(p,q);if(!best||d<best.d)best={d:d,q:q,l:l}});
+      if(best&&best.d<=((id.indexOf("OUT:c_")===0||id.indexOf("A:c_")===0||/^Z\d/.test(id))?1e9:(RD.snapMax||80))){var j="J:"+id;add(j,best.q);edge(id,j,true);edge(j,best.l[0],true);edge(j,best.l[1],true)}});
+  }
+  return NETS[M.key]={nodes:nodes,adj:adj};
+}
+function isSky(e){return e.area==="sky"&&e.sky&&e.sky.length===2}
+function isOut(e){return e.area==="out"&&!!e.out}
+function facOf(id){var M=mk();return M&&M.outside?M.outside.facilities.filter(function(x){return x.id===id})[0]:null}
+function outNode(e){var f=facOf(e.out);return "OUT:"+e.out+((f&&f.doors)?":"+(e.door||f.doors[1].k):"")}
+function nodeOf(e){return isSky(e)?"K:"+e.id:isOut(e)?outNode(e):"P:"+normSpot(e.spot)}
+function posE(e){if(isSky(e))return e.sky;var M=mk();if(isOut(e))return M?(getNet(M).nodes[outNode(e)]||null):null;return pos(e.spot)}
+function skyZone(M,id){return M.sky?M.sky.zones.filter(function(z){return z.id===id})[0]:null}
+function zoneOfPos(M,p){if(!M||!M.sky||!p)return null;var hit=M.sky.zones.filter(function(z){return inPoly(p[0],p[1],z.poly)})[0];if(hit)return hit;
+  var best=null,bd=1e9;M.sky.zones.forEach(function(z){z.poly.forEach(function(q){var d2=dist(p,q);if(d2<bd){bd=d2;best=z}})});return best}   // 外れていたら一番近いエリア
+function skyName(e){var M=mk(),z=M?zoneOfPos(M,e.sky):null;return z?z.name:"青空駐車場"}
+// 青空駐車場の車(ピン)を、その時だけ道のつながりに足す。エリアの中は自由に動ける(CEO確認)。エリアの出入りは、そのエリアの入口の点を通る。
+function netFor(M,list){
+  var base=getNet(M),sk=(list||[]).filter(isSky);if(!sk.length||!M.sky)return base;
+  var nodes={},adj={};Object.keys(base.nodes).forEach(function(k){nodes[k]=base.nodes[k]});Object.keys(base.adj).forEach(function(k){adj[k]=base.adj[k].slice()});
+  sk.forEach(function(e){nodes["K:"+e.id]=e.sky;adj["K:"+e.id]=[]});
+  M.sky.zones.forEach(function(z){
+    var mine=sk.filter(function(e){var zz=zoneOfPos(M,e.sky);return zz&&zz.id===z.id}).map(function(e){return "K:"+e.id});
+    var ids=mine.concat(z.entry);if(!mine.length)return;
+    for(var i=0;i<ids.length;i++)for(var j=i+1;j<ids.length;j++){var w=dist(nodes[ids[i]],nodes[ids[j]]);adj[ids[i]].push([ids[j],w]);adj[ids[j]].push([ids[i],w])}
+  });
+  return {nodes:nodes,adj:adj};
+}
+function dijkstra(net,src){
+  var D={},P={},done={},ids=Object.keys(net.nodes);ids.forEach(function(i){D[i]=1e18});D[src]=0;
+  for(var it=0;it<ids.length;it++){var u=null,bu=1e18;ids.forEach(function(i){if(!done[i]&&D[i]<bu){bu=D[i];u=i}});if(u===null)break;done[u]=1;
+    net.adj[u].forEach(function(e){var v=e[0],nd=D[u]+e[1];if(nd<D[v]){D[v]=nd;P[v]=u}})}
+  return {D:D,P:P}
+}
+function pathNodes(sp,dst){var out=[],c=dst;while(c){out.push(c);c=sp.P[c]}return out.reverse()}
+// 出入口 → 配達先1 → 2 → … → 出入口(水産棟に戻る)の、道なりの折れ線
+function pathThrough(entries){
+  var M=mk(),net=netFor(M,entries),g0="G"+gatePos(M).id,cur=g0,pts=[net.nodes[cur]],any=false;
+  var legs=[];
+  entries.forEach(function(e){if(!posE(e))return;any=true;var a0=pts.length-1,dst=nodeOf(e),sp=dijkstra(net,cur);pathNodes(sp,dst).slice(1).forEach(function(n){pts.push(net.nodes[n])});legs.push(a0);cur=dst});
+  if(any){var a1=pts.length-1,sp2=dijkstra(net,cur);pathNodes(sp2,g0).slice(1).forEach(function(n){pts.push(net.nodes[n])});legs.push(a1)}
+  pts.legs=legs;   // 各区間(配達先1→2→…→戻り)の始まりの位置
+  return pts;
+}
+// 出入口から出て全部を回り、水産棟に戻るまでの道のりが一番短い順(12件以下は厳密、それ以上は近似)
+function solveRoute(list){
+  var M=mk();if(!M)return {order:list.slice(),total:0,path:[]};
+  var net=netFor(M,list),start="G"+gatePos(M).id,wp=list.filter(function(e){return posE(e)}),np=list.filter(function(e){return !posE(e)});
+  var n=wp.length,ids=[start].concat(wp.map(nodeOf)),SP=ids.map(function(i){return dijkstra(net,i)});
+  function d(a,b){return SP[a].D[ids[b]]}
+  var order=[];
+  if(n<=1){order=wp.map(function(_,i){return i})}
+  else if(n<=12){
+    var N=1<<n,INF=1e18,dp=[],par=[];
+    for(var m=0;m<N;m++){dp.push(new Array(n).fill(INF));par.push(new Array(n).fill(-1))}
+    for(var i=0;i<n;i++)dp[1<<i][i]=d(0,i+1);
+    for(var m=1;m<N;m++)for(var i=0;i<n;i++){
+      if(!(m&(1<<i))||dp[m][i]>=INF)continue;
+      for(var j=0;j<n;j++){if(m&(1<<j))continue;var nm=m|(1<<j),v=dp[m][i]+d(i+1,j+1);if(v<dp[nm][j]){dp[nm][j]=v;par[nm][j]=i}}
+    }
+    var best=0,bm=N-1,bv=1e18;for(var i=0;i<n;i++){var v=dp[bm][i]+d(i+1,0);if(v<bv){bv=v;best=i}}   // 最後に出入口へ戻る分も足す
+    var mm=bm,ii=best;while(ii>=0){order.push(ii);var pi=par[mm][ii];mm&=~(1<<ii);ii=pi}
+    order.reverse();
+  }else{
+    var left=wp.map(function(_,i){return i}),cur=0;
+    while(left.length){var bi=0;left.forEach(function(k,x){if(d(cur,k+1)<d(cur,left[bi]+1))bi=x});order.push(left[bi]);cur=left[bi]+1;left.splice(bi,1)}
+  }
+  var res=order.map(function(i){return wp[i]});
+  // 現場の回り方に合わせた目安(CEO確認 2026-10-14): 場内の配達先だけで、西の道から入る出入口なら、
+  // 番号の大きい列(西側)から小さい列(南東側)へ順に回り、南東の端の近く(A〜C・番号1〜3)は最後にして、一方通行で戻る。
+  // 青空駐車場が入っているときは、道のりが短い順。
+  var rule="shortest";
+  if(M.rule==="sweep"&&n>1&&!wp.some(function(e){return isSky(e)||isOut(e)})&&entryIsWest(M,gatePos(M).id)){res=sweepOrder(wp);rule="sweep"}
+  var path=pathThrough(res),tot=0;for(var i=1;i<path.length;i++)tot+=dist(path[i-1],path[i]);
+  return {order:res.concat(np),total:tot,noPos:np.length,path:path,rule:rule};
+}
+function entryIsWest(M,gid){var net=getNet(M),sp=dijkstra(net,"G"+gid),ids=Object.keys(M.pillars),mid="P:"+ids[Math.floor(ids.length/2)];return pathNodes(sp,mid).indexOf("W4")>=0}
+function sweepOrder(list){
+  var items=list.map(function(e){var c=normSpot(e.spot).split("-");return {e:e,L:c[0].charCodeAt(0)-65,n:+c[1]}});
+  var zone=function(x){return x.L<=2&&x.n<=3};
+  var main=items.filter(function(x){return !zone(x)}),ex=items.filter(zone);
+  main.sort(function(a,b){return b.n-a.n||a.L-b.L});
+  ex.sort(function(a,b){return b.n-a.n||b.L-a.L});
+  return main.concat(ex).map(function(x){return x.e});
+}
+var lastSol=null;
+function ordered(){
+  var list=routeIds.map(byId).filter(Boolean),M=mk();lastSol=null;
+  if(M&&routeMode==="auto"){lastSol=solveRoute(list);return lastSol.order}
+  if(M)lastSol={order:list,path:pathThrough(list)};
+  return list;
+}
+function saveRoute(){ls("route",routeIds);ls("done",routeDone);ls("mode",routeMode)}
+function addRoute(id){if(routeIds.indexOf(id)<0){routeIds.push(id);saveRoute();renderRoute();renderBadge()}}
+function renderBadge(){var n=routeIds.filter(function(i){return !routeDone[i]}).length;$("#rBadge").textContent=n;$("#rBadge").classList.toggle("hid",!n)}
+
+/* ---- 地図(自前の略図。柱の点・順番・道すじを描く) ---- */
+function truckG(x,y,k,cls){return '<g class="'+cls+'" transform="translate('+x+' '+y+') scale('+k+')"><rect x="-3" y="-1.5" width="6" height="7.5" rx=".8"/><rect x="-3" y="-6" width="6" height="4.2" rx="1.2"/><rect class="win" x="-2" y="-5.3" width="4" height="1.6" rx=".4"/><rect class="wh" x="-4.3" y="-4.6" width="1.3" height="2.4" rx=".5"/><rect class="wh" x="3" y="-4.6" width="1.3" height="2.4" rx=".5"/><rect class="wh" x="-4.3" y="2.2" width="1.3" height="2.8" rx=".5"/><rect class="wh" x="3" y="2.2" width="1.3" height="2.8" rx=".5"/></g>'}
+function inPoly(x,y,poly){var c=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];if(((yi>y)!=(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))c=!c}return c}
+// opts: {sky:true} 青空駐車場も描く / {focusSky:true} 青空駐車場だけを大きく
+function mapSvg(stops,hl,path,opts){
+  var M=mk();if(!M)return "";opts=opts||{};
+  if(opts.focusZone)opts.focusSky=true;
+  var zl=[];
+  if(M.sky){if(opts.focusZone){var zz=skyZone(M,opts.focusZone);if(zz)zl=[zz]}else if(opts.skyZones)zl=opts.skyZones.map(function(id){return skyZone(M,id)}).filter(Boolean);else if(opts.sky)zl=[M.sky.zones[0]]}
+  var PZ=(opts.places&&M.sky)?M.sky.zones.filter(function(z){return z.outer||z.both}):[];
+  var xs=[],ys=[];
+  if(opts.focusSky&&M.sky){zl.forEach(function(z){z.poly.forEach(function(p){xs.push(p[0]);ys.push(p[1])})})}
+  else{
+    Object.keys(M.pillars).forEach(function(k){xs.push(M.pillars[k][0]);ys.push(M.pillars[k][1])});
+    M.gates.forEach(function(g){xs.push(g.p[0]);ys.push(g.p[1])});
+    zl.forEach(function(z){z.poly.forEach(function(p){xs.push(p[0]);ys.push(p[1])})});
+    PZ.forEach(function(z){z.poly.forEach(function(p){xs.push(p[0]);ys.push(p[1])})});
+    if(opts.places&&M.roads)Object.keys(M.roads.nodes).forEach(function(k){xs.push(M.roads.nodes[k][0]);ys.push(M.roads.nodes[k][1])});
+    if(opts.out&&M.outside)M.outside.facilities.forEach(function(f){xs.push(f.p[0]-f.size[0]/2,f.p[0]+f.size[0]/2);ys.push(f.p[1]-f.size[1]/2,f.p[1]+f.size[1]/2+10)});
+  }
+  if(!opts.focusSky&&path)path.forEach(function(p){xs.push(p[0]);ys.push(p[1])});
+  if(opts.wide&&M.roads)Object.keys(M.roads.nodes).forEach(function(k){xs.push(M.roads.nodes[k][0]);ys.push(M.roads.nodes[k][1])});
+  var mg=opts.focusSky?12:(opts.places?30:22),x0=Math.min.apply(null,xs)-mg,x1=Math.max.apply(null,xs)+mg,y0=Math.min.apply(null,ys)-(opts.focusSky?10:20),y1=Math.max.apply(null,ys)+(opts.focusSky?10:20),W=x1-x0,H=y1-y0;
+  var K=opts.places?Math.max(1,W/330):1;
+  var g='<svg viewBox="'+x0+' '+y0+' '+W+' '+H+'" class="msvg'+(opts.places?' pl':'')+'" style="--k:'+K.toFixed(2)+'" role="img" aria-label="駐車場の略図">';
+  zl.forEach(function(z){g+='<polygon points="'+z.poly.map(function(p){return p.join(",")}).join(" ")+'" class="m-sky"/><text x="'+(z.poly[0][0]+4)+'" y="'+(z.poly[0][1]+9)+'" class="m-t">'+z.name+'</text>';
+    if(!z.no)z.entry.forEach(function(id){var q=getNet(M).nodes[id];g+='<rect x="'+(q[0]-3)+'" y="'+(q[1]-1.2)+'" width="6" height="2.4" class="m-door"/>'})});
+  if(opts.places&&M.bg){
+    M.bg.blocks.forEach(function(q){g+='<polygon points="'+q+'" class="m-bk"/>'});
+    M.bg.roads.forEach(function(r){g+='<polyline points="'+r[1]+'" class="'+(r[0]?'m-br1':'m-br0')+'"/>'});
+  }
+  if(M.roads&&!opts.focusSky){var RN=getNet(M).nodes;var rl=function(cls){M.roads.links.forEach(function(l){var a1=RN[l[0]],b1=RN[l[1]];g+='<line x1="'+a1[0]+'" y1="'+a1[1]+'" x2="'+b1[0]+'" y2="'+b1[1]+'" class="'+cls+'"/>'})};
+    if(opts.places){rl("m-rc");rl("m-ri")}else rl("m-road2");
+    (M.roads.exits||[]).forEach(function(k){var q=RN[k];g+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="4.6" class="m-exit"/>'})}
+  if(opts.out&&M.outside&&!opts.focusSky){
+    var NT0=getNet(M);
+    M.outside.facilities.forEach(function(f){(f.doors||[{k:""}]).forEach(function(d){var a1=NT0.nodes["OUT:"+f.id+(d.k?":"+d.k:"")];f.links.forEach(function(t){var b1=NT0.nodes[t];if(a1&&b1)g+='<line x1="'+a1[0]+'" y1="'+a1[1]+'" x2="'+b1[0]+'" y2="'+b1[1]+'" class="m-road"/>'})})});
+    M.outside.facilities.forEach(function(f){g+='<rect x="'+(f.p[0]-f.size[0]/2)+'" y="'+(f.p[1]-f.size[1]/2)+'" width="'+f.size[0]+'" height="'+f.size[1]+'" rx="2" class="m-fac"/><text x="'+f.p[0]+'" y="'+(f.p[1]+f.size[1]/2+7)+'" text-anchor="middle" class="m-fact">'+f.name+'</text>'});
+  }
+  if(opts.places){
+    var HL=' paint-order="stroke" stroke="var(--surface)" stroke-width="'+(3*K).toFixed(1)+'" stroke-linejoin="round"';
+    if(M.bg)g+='<text x="'+(x1-4)+'" y="'+(y1-4)+'" text-anchor="end" class="m-cr" font-size="'+(5.5*K).toFixed(1)+'">'+M.bg.credit+'</text>';
+    (M.roadnames||[]).forEach(function(r){g+='<text x="'+r.p[0]+'" y="'+r.p[1]+'" text-anchor="middle" class="m-rn" font-size="'+(8*K).toFixed(1)+'"'+HL+'>'+r.t+'</text>'});
+    (M.landmarks||[]).forEach(function(r){g+='<text x="'+r.p[0]+'" y="'+r.p[1]+'" text-anchor="middle" class="m-lm" font-size="'+(7*K).toFixed(1)+'"'+HL+'>'+r.t+'</text>'});
+    PZ.forEach(function(z){var cx=0,cy=0,my=-1e9;z.poly.forEach(function(q){cx+=q[0];cy+=q[1];if(q[1]>my)my=q[1]});cx/=z.poly.length;cy/=z.poly.length;
+      g+='<polygon points="'+z.poly.map(function(q){return q.join(",")}).join(" ")+'" class="m-pz"/>'+
+        '<g class="m-pb"><circle cx="'+cx+'" cy="'+cy+'" r="'+(6.4*K).toFixed(1)+'"/><text x="'+cx+'" y="'+(cy+2.6*K).toFixed(1)+'" text-anchor="middle" font-size="'+(8*K).toFixed(1)+'">'+(z.no||"🚚")+'</text></g>'+
+        '<text x="'+cx+'" y="'+(my+10*K).toFixed(1)+'" text-anchor="middle" class="m-pn" font-size="'+(8.6*K).toFixed(1)+'"'+HL+'>'+esc(z.name)+'</text>'});
+  }
+  var order=[1,2,3,4,5,6,7,8],bp=order.map(function(i){return M.gates.filter(function(x){return x.id===i})[0].p});
+  g+='<polygon points="'+bp.map(function(p){return p.join(",")}).join(" ")+'" class="m-bld"/><text x="'+(bp[1][0]+14)+'" y="'+(bp[1][1]+26)+'" class="m-t">水産棟</text>';
+  if(!opts.focusSky){
+    g+='<polygon points="'+M.poly.map(function(p){return p.join(",")}).join(" ")+'" class="m-lot"/>';
+    (M.unused||[]).forEach(function(z){g+='<polygon points="'+z.map(function(p){return p.join(",")}).join(" ")+'" class="m-unused"/>'});
+    var NT=getNet(M);M.links.forEach(function(l){if(l[2]===1)return;var a1=NT.nodes[l[0]],b1=NT.nodes[l[1]];if(a1&&b1)g+='<line x1="'+a1[0]+'" y1="'+a1[1]+'" x2="'+b1[0]+'" y2="'+b1[1]+'" class="m-road"/>'});
+    g+='<text x="'+(x0+2)+'" y="'+(y0+H*0.6)+'" class="m-t">青果棟側</text><text x="'+(x1-40)+'" y="'+(y1-6)+'" class="m-t">道路側</text>';
+    if(!opts.places)Object.keys(M.pillars).forEach(function(k){var p=M.pillars[k];g+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="1.4" class="m-p"/>'});
+    var L="ABCDEFGHIJKLMNO";
+    if(!opts.places)for(var i=0;i<L.length;i++){var p=M.pillars[L[i]+"-1"];if(p)g+='<text x="'+(p[0]+4)+'" y="'+(p[1]+8)+'" class="m-l">'+L[i]+'</text>'}
+    if(!opts.places)for(var n=1;n<=9;n++){for(var i=0;i<L.length;i++){var q=M.pillars[L[i]+"-"+n];if(q){g+='<text x="'+(q[0]-9)+'" y="'+(q[1]-3)+'" class="m-n">'+n+'</text>';break}}}
+  }
+  var GP=gatePos(M),S=GP.p;
+  M.gates.forEach(function(gt){var on=gt.id===GP.id;g+='<g class="m-gate'+(on?" on":"")+'"><rect x="'+(gt.p[0]-4.6)+'" y="'+(gt.p[1]-4.6)+'" width="9.2" height="9.2" rx="1.6"/><text x="'+gt.p[0]+'" y="'+(gt.p[1]+2.4)+'" text-anchor="middle">'+gt.id+'</text></g>'});
+  if(M.oneway&&!opts.focusSky){var ow=M.oneway;g+='<polyline points="'+ow.map(function(p){return p.join(",")}).join(" ")+'" class="m-ow"/>';
+    for(var oi=0;oi<ow.length-1;oi++){var a1=ow[oi],b1=ow[oi+1],mx=(a1[0]+b1[0])/2,my=(a1[1]+b1[1])/2,ang=Math.atan2(b1[1]-a1[1],b1[0]-a1[0])*180/Math.PI;
+      g+='<polygon points="-4,-3.2 4,0 -4,3.2" class="m-owa" transform="translate('+mx+' '+my+') rotate('+ang+')"/>'}
+    g+='<text x="'+(ow[1][0]-18)+'" y="'+(ow[1][1]+14)+'" class="m-owt">一方通行</text>'}
+  var line=(path&&path.length>1)?path:(stops&&stops.length?[S].concat(stops.map(function(s){return s.p})):null);
+  if(line&&!opts.focusSky&&line.legs&&line.legs.length){
+    var COLS=["#ff6a13","#1f8bd1","#2fa84f","#c43fb0","#d4a017","#00a5a5","#8a5a2b","#6a4fd1"],lg=line.legs,k2=opts.places?K:1;
+    for(var li=0;li<lg.length;li++){var a0=lg[li],b0=(li+1<lg.length?lg[li+1]:line.length-1),col=(li===lg.length-1)?"#59656d":COLS[li%COLS.length],seg=line.slice(a0,b0+1);if(seg.length<2)continue;
+      g+='<polyline points="'+seg.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1)}).join(" ")+'" class="m-leg" style="stroke:'+col+'"/>';
+      var acc=0,step=38*k2;for(var si=1;si<seg.length;si++){var p0=seg[si-1],p1=seg[si],sl=Math.hypot(p1[0]-p0[0],p1[1]-p0[1]);if(sl<0.5)continue;acc+=sl;if(acc>=step){acc=0;var an=Math.atan2(p1[1]-p0[1],p1[0]-p0[0])*180/Math.PI;g+='<polygon points="-3.2,-2.6 3.2,0 -3.2,2.6" fill="'+col+'" stroke="#fff" stroke-width=".5" transform="translate('+((p0[0]+p1[0])/2)+' '+((p0[1]+p1[1])/2)+') rotate('+an.toFixed(0)+') scale('+k2.toFixed(2)+')"/>'}}}
+  }else if(line&&!opts.focusSky)g+='<polyline points="'+line.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1)}).join(" ")+'" class="m-path"/>';
+  if(!opts.focusSky)g+='<text x="'+(S[0]+7)+'" y="'+(S[1]-6)+'" class="m-st">出る入口</text>';
+  (stops||[]).forEach(function(s){
+    if(s.sky)g+='<g class="m-stop sky'+(s.done?" done":"")+'">'+truckG(s.p[0],s.p[1],0.8,"m-tk")+'</g>'+(s.no!==""?'<g class="m-stop sky"><circle cx="'+(s.p[0]+6)+'" cy="'+(s.p[1]-6)+'" r="4" class="m-no"/><text x="'+(s.p[0]+6)+'" y="'+(s.p[1]-4.4)+'" text-anchor="middle">'+s.no+'</text></g>':'');
+    else g+='<g class="m-stop'+(s.done?" done":"")+'"><circle cx="'+s.p[0]+'" cy="'+s.p[1]+'" r="5.4"/><text x="'+s.p[0]+'" y="'+(s.p[1]+2.4)+'" text-anchor="middle">'+s.no+'</text></g>'});
+  if(hl){var hp=(typeof hl==="string")?M.pillars[hl]:hl.p,hlab=(typeof hl==="string")?hl:(hl.label||"");
+    if(hp){if(typeof hl!=="string"&&hl.sky){g+='<circle cx="'+hp[0]+'" cy="'+hp[1]+'" r="9" class="m-hl"/>'+truckG(hp[0],hp[1],1.1,"m-tk hot")+'<text x="'+(hp[0]+10)+'" y="'+(hp[1]-8)+'" class="m-hlt">'+esc(hlab)+'</text>'}
+      else g+='<circle cx="'+hp[0]+'" cy="'+hp[1]+'" r="9" class="m-hl"/><circle cx="'+hp[0]+'" cy="'+hp[1]+'" r="3.2" class="m-hd"/><text x="'+(hp[0]+11)+'" y="'+(hp[1]-6)+'" class="m-hlt">'+hlab+'</text>'}}
+  return g+'</svg>';
+}
+function showMap(code){var M=mk(),c=normSpot(code);if(!M||!M.pillars[c])return;$("#mapBox").classList.remove("big");$("#mapBox").innerHTML=mapSvg([],c);$("#mapTitle").textContent="停車位置 "+c;openSheet("shMap","bkMap")}
+function showOutMap(id){var M=mk(),e=byId(id);if(!M||!e||!isOut(e))return;var f=facOf(e.out),p=posE(e);
+  $("#mapBox").innerHTML=mapSvg([],{p:p,label:f.name+(e.door?"("+e.door+")":"")},null,{out:true,places:true});$("#mapBox").classList.add("big");$("#mapTitle").textContent="場外 "+f.name+(e.door?"  入口:"+e.door:"");openSheet("shMap","bkMap")}
+function showSkyMap(id){var M=mk(),e=byId(id);if(!M||!e||!isSky(e))return;$("#mapBox").classList.remove("big");
+  var others=entries.filter(function(x){return isSky(x)&&x.id!==id}).map(function(x){return {p:x.sky,no:"",sky:true}});
+  var z=zoneOfPos(M,e.sky);$("#mapBox").innerHTML=mapSvg([],{p:e.sky,label:e.name,sky:true},null,{focusZone:z.id});$("#mapTitle").textContent=z.name+"  "+e.name;openSheet("shMap","bkMap")}
+
+function renderRoute(){
+  var list=ordered(),M=mk(),html='';
+  Array.prototype.forEach.call($("#modeSeg").children,function(b){b.classList.toggle("on",b.getAttribute("data-m")===routeMode)});
+  if(!list.length){html='<div class="empty-state"><div class="big">🛒</div>ポンポンに積んだ荷物の配達先を、上の欄に入れてください。<br>回る順番を自動で並べます。</div>'}
+  else{
+    if(M){html+='<div class="gates"><span>水産棟の どの出入口から出ますか?</span><div class="gchips">'+M.gates.map(function(g){return '<button data-gate="'+g.id+'" class="'+(g.id===gatePos(M).id?"on":"")+'">'+g.id+'</button>'}).join("")+'</div></div>'}
+    if(M){var stops=list.map(function(e,i){return {p:posE(e),no:i+1,done:!!routeDone[e.id],sky:isSky(e),out:isOut(e)}}).filter(function(s){return s.p});var UP=list.some(function(e){return isOut(e)||(isSky(e)&&((zoneOfPos(M,e.sky)||{}).outer||(zoneOfPos(M,e.sky)||{}).both))});html+='<div class="mapbox'+(UP?' big':'')+'">'+mapSvg(stops,null,lastSol&&lastSol.path,{skyZones:list.filter(isSky).map(function(e){var z=zoneOfPos(M,e.sky);return z.id}).filter(function(v,i,a){return a.indexOf(v)===i}),out:list.some(isOut),places:UP})+'</div>'}
+    html+='<div class="start">スタート: '+(M?'水産棟の出入口 '+gatePos(M).id:esc(COMPANIES[CO].map.start))+'</div>';
+    html+=list.map(function(e,i){var d=!!routeDone[e.id],has=!!posE(e);
+      return '<div class="stop '+(d?"done":"")+'"><div class="no">'+(i+1)+'</div><div><div class="nm">'+esc(e.name)+'</div><div class="meta">'+(isSky(e)?'<button class="spot spot-b sky-b" data-skymap="'+esc(e.id)+'">🚚 '+esc(skyName(e))+'</button>':isOut(e)?'<button class="spot spot-b out-b" data-outmap="'+esc(e.id)+'">🏢 '+esc((facOf(e.out)||{}).name||"場外")+(e.door?'('+esc(e.door)+')':'')+'</button>':(e.spot?'<button class="spot spot-b" data-map="'+esc(e.spot)+'">'+esc(normSpot(e.spot))+'</button>':'<span>位置未登録</span>'))+(!isSky(e)&&!isOut(e)&&e.spot&&M&&!has?'<span class="warnx">地図にない柱</span>':'')+(e.time?'<span>'+esc(e.time)+'</span>':'')+(e.car?'<span>'+esc(e.car)+'</span>':'')+'</div></div>'+
+        '<div class="ctl"><button class="ok" data-ok="'+esc(e.id)+'" aria-label="済み">'+(d?"✓":"済")+'</button>'+
+        (routeMode==="manual"?'<div class="mv"><button data-up="'+esc(e.id)+'" aria-label="上へ">↑</button><button data-dn="'+esc(e.id)+'" aria-label="下へ">↓</button></div>':'<button data-rm="'+esc(e.id)+'" aria-label="外す">✕</button>')+'</div></div>'}).join("");
+  }
+  if(list.length&&M)html+='<div class="back-row">↩ 配達がおわったら、一方通行の道を通って 水産棟(出入口'+gatePos(M).id+')に戻る</div>';
+  $("#routeList").innerHTML=html;fitRouteMaps();
+  $("#routeTools").innerHTML=list.length?'<button class="btn line" id="clrDone">済みを消す</button><button class="btn line" id="clrAll">全部クリア</button>':'';
+  $("#mapNote").innerHTML=M?'<b>並び方のしくみ(試作)</b><br>柱の位置から、スタートを出て全部の配達先を回る道のりが一番短くなる順に並べます。出る入口は、タップで変えられます。現場の回り方に合わせた目安です。西の道から駐車場に入り、番号の大きい列(西側)から小さい列へ順に回り、南東の端の近くは最後にして、一方通行で水産棟に戻ります。紫の一方通行(南東→南西)を守り、緑の場所(使わない)は通りません。東側の出入口(3・4・5番)と、青空駐車場・場外の配達先が入っているときは、道のりが短い順です。青空駐車場の中は、自由に通れる扱いです。距離は地図上の目安で、実際の歩く距離とは違います。場所が未登録の配達先は、最後に並びます。':'<b>この会社は、まだ駐車場の地図がありません</b><br>配達先を追加した順に並びます。「手で並べる」で順番を変えられます。';
+  var C=$("#clrDone");if(C)C.onclick=function(){routeIds=routeIds.filter(function(i){return !routeDone[i]});routeDone={};saveRoute();renderRoute();renderBadge();renderResults()};
+  C=$("#clrAll");if(C)C.onclick=function(){if(confirm("ルートを全部消しますか?")){routeIds=[];routeDone={};saveRoute();renderRoute();renderBadge();renderResults()}};
+  var L=$("#routeList");
+  Array.prototype.forEach.call(L.querySelectorAll("[data-gate]"),function(b){b.onclick=function(){gateId=+b.getAttribute("data-gate");ls("gate",gateId);renderRoute()}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-map]"),function(b){b.onclick=function(){showMap(b.getAttribute("data-map"))}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-skymap]"),function(b){b.onclick=function(){showSkyMap(b.getAttribute("data-skymap"))}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-outmap]"),function(b){b.onclick=function(){showOutMap(b.getAttribute("data-outmap"))}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-ok]"),function(b){b.onclick=function(){var id=b.getAttribute("data-ok");routeDone[id]=!routeDone[id];saveRoute();renderRoute();renderBadge()}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-rm]"),function(b){b.onclick=function(){var id=b.getAttribute("data-rm");routeIds=routeIds.filter(function(x){return x!==id});delete routeDone[id];saveRoute();renderRoute();renderBadge();renderResults()}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-up],[data-dn]"),function(b){b.onclick=function(){var id=b.getAttribute("data-up")||b.getAttribute("data-dn"),i=routeIds.indexOf(id),j=b.hasAttribute("data-up")?i-1:i+1;if(j<0||j>=routeIds.length)return;var t=routeIds[i];routeIds[i]=routeIds[j];routeIds[j]=t;saveRoute();renderRoute()}});
+}
+Array.prototype.forEach.call($("#modeSeg").children,function(b){b.onclick=function(){
+  var m=b.getAttribute("data-m");if(m===routeMode)return;
+  if(m==="manual"){routeIds=ordered().map(function(e){return e.id})} // 今の自動順を、手並べの出発点にする
+  routeMode=m;saveRoute();renderRoute()}});
+$("#rq").addEventListener("input",function(){
+  var q=$("#rq").value,box=$("#rsug");
+  if(!q.trim()){box.innerHTML="";return}
+  var f=search(q).filter(function(e){return routeIds.indexOf(e.id)<0}).slice(0,5);
+  box.innerHTML=f.length?'<div class="sug">'+f.map(function(e){return '<button data-pick="'+esc(e.id)+'"><span>'+esc(e.name)+'</span><small>'+(isSky(e)?esc(skyName(e)):isOut(e)?'場外':esc(e.spot||""))+'</small></button>'}).join("")+'</div>':'<div class="sub" style="margin:8px 2px">一致する配達先がありません(すでに入っている場合もあります)</div>';
+  Array.prototype.forEach.call(box.querySelectorAll("[data-pick]"),function(b){b.onclick=function(){addRoute(b.getAttribute("data-pick"));$("#rq").value="";box.innerHTML="";renderResults()}});
+});
+
+/* ---- タブ ---- */
+function switchTab(t){
+  $("#vSearch").classList.toggle("hid",t!=="search");$("#vRoute").classList.toggle("hid",t!=="route");
+  $("#tSearch").classList.toggle("on",t==="search");$("#tRoute").classList.toggle("on",t==="route");
+  window.scrollTo(0,0);if(t==="route")fitRouteMaps();
+}
+$("#tSearch").onclick=function(){switchTab("search")};
+$("#tRoute").onclick=function(){switchTab("route")};
+$("#tAdd").onclick=function(){openForm(null)};
+
+/* ---- 登録フォーム ---- */
+function buildTimes(){var h='<option value="">--:--</option>';for(var a=0;a<24;a++)for(var m=0;m<60;m+=15)h+='<option value="'+a+":"+(m<10?"0"+m:m)+'">'+a+":"+(m<10?"0"+m:m)+'</option>';$("#fT1").innerHTML=h;$("#fT2").innerHTML=h}
+buildTimes();
+function openSheet(id,bk){$("#"+id).classList.remove("hid");$("#"+bk).classList.remove("hid")}
+function closeSheet(id,bk){$("#"+id).classList.add("hid");$("#"+bk).classList.add("hid")}
+function renderPhotos(){
+  var h=tmpImgs.map(function(u,i){return '<div class="ph">'+phImg(u,'alt=""')+'<button data-rmimg="'+i+'" aria-label="消す">✕</button></div>'}).join("");
+  if(tmpImgs.length<3)h+='<button type="button" class="add" id="addImg"><b>＋</b>写真を足す</button>';
+  $("#fPhotos").innerHTML=h;loadPh($("#fPhotos"));
+  var A=$("#addImg");if(A)A.onclick=function(){$("#fileIn").click()};
+  Array.prototype.forEach.call($("#fPhotos").querySelectorAll("[data-rmimg]"),function(b){b.onclick=function(){tmpImgs.splice(+b.getAttribute("data-rmimg"),1);renderPhotos()}});
+}
+$("#fileIn").addEventListener("change",function(){
+  var f=this.files&&this.files[0];this.value="";if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){var im=new Image();im.onload=function(){
+    var max=720,s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);tmpImgs.push(c.toDataURL("image/jpeg",0.62));renderPhotos()};im.src=rd.result};
+  rd.readAsDataURL(f);
+});
+function openForm(e,pre){
+  editingId=e?e.id:null;
+  $("#fTitle").textContent=e?"配達先を編集":"配達先を登録";
+  $("#fName").value=e?e.name:(pre||"");$("#fAl").value=e?(e.aliases||[]).join("、"):"";
+  var t=(e&&e.time?e.time:"").split(/[〜～\-~]/).map(function(s){return s.trim()});$("#fT1").value=t[0]||"";$("#fT2").value=t[1]||"";
+  $("#fCar").value=e?(e.car||""):"";$("#fSpot").value=e?(e.spot||""):"";$("#fLoc").value=e?(e.loc||""):"";$("#fNote").value=e?(e.note||""):"";
+  tmpImgs=e&&e.imgs?e.imgs.slice():[];renderPhotos();
+  skyPos=e&&isSky(e)?e.sky.slice():null;skyZoneId=null;fOut=e&&isOut(e)?e.out:null;fDoor=e&&isOut(e)?(e.door||""):"";setArea(e&&isSky(e)?"sky":(e&&isOut(e)?"out":"in"),e&&isSky(e)&&(function(){var M=mk(),z=M&&zoneOfPos(M,e.sky);return z&&z.outer&&!z.both})());spotCheck();
+  $("#fDel").classList.toggle("hid",!e);$("#fMsg").textContent="";$("#fMsg").className="msg";
+  openSheet("shForm","bkForm");dupCheck();
+  setTimeout(function(){$("#fName").focus()},60);
+}
+function dupCheck(){
+  var w=$("#fDup");if(editingId){w.classList.add("hid");return}
+  var v=$("#fName").value.trim();if(!v){w.classList.add("hid");return}
+  var m=search(v).slice(0,3);
+  if(m.length){w.textContent="⚠ 似た名前がすでにあります: "+m.map(function(x){return x.name}).join("、")+"。同じ配達先なら、新しく作らず「編集」してください。";w.classList.remove("hid")}else w.classList.add("hid");
+}
+/* ---- 場所の種類(場内=柱の番号 / 青空=地図に置く) ---- */
+var fArea="in",skyPos=null,skyZoneId=null,fOut=null,fDoor="",skyOuter=false;
+function setArea(a,outer){
+  fArea=a;skyOuter=(a==="sky"&&!!outer);
+  function renderOutPick(){
+  var M=mk();if(!M||!M.outside){$("#outChips").innerHTML="";$("#outHelp").textContent="この会社には、場外の施設の地図がありません";return}
+  var fs=M.outside.facilities;
+  var oz=(M.sky?M.sky.zones.filter(function(z){return z.outer||z.both}):[]);
+  $("#outChips").innerHTML=fs.map(function(f){return '<button type="button" data-f="'+f.id+'" class="'+(fOut===f.id?"on":"")+'">'+f.name+'</button>'}).join("")+oz.map(function(z){return '<button type="button" data-oz="'+z.id+'" class="oz">🚚 '+z.name+'</button>'}).join("");
+  var f=fOut?facOf(fOut):null;
+  $("#doorRow").classList.toggle("hid",!(f&&f.doors));
+  if(f&&f.doors){if(!fDoor)fDoor=f.doors[1].k;$("#doorChips").innerHTML=f.doors.map(function(d){return '<button type="button" data-d="'+d.k+'" class="'+(fDoor===d.k?"on":"")+'">'+d.k+'</button>'}).join("")}
+  var p=f?getNet(M).nodes["OUT:"+f.id+(f.doors?":"+fDoor:"")]:null;
+  $("#outBox").innerHTML=mapSvg([],p?{p:p,label:f.name+(f.doors?"("+fDoor+")":"")}:null,null,{out:true,places:true});fitBig($("#outBox"));
+  $("#outHelp").textContent=f?"✓ "+f.name+(f.doors?"("+fDoor+"の入口)":"")+" に運びます。お店の名前は、上の「正式名」に入れてください":"施設を選んでください";
+  $("#outHelp").style.color=f?"#1c7a4d":"";
+  Array.prototype.forEach.call($("#outChips").children,function(b){b.onclick=function(){if(b.getAttribute("data-oz")){skyZoneId=b.getAttribute("data-oz");skyPos=null;fOut=null;setArea("sky",true);return}fOut=b.getAttribute("data-f");fDoor="";renderOutPick()}});
+  Array.prototype.forEach.call($("#doorChips").children,function(b){b.onclick=function(){fDoor=b.getAttribute("data-d");renderOutPick()}});
+}
+Array.prototype.forEach.call($("#areaSeg").children,function(b){b.classList.toggle("on",b.getAttribute("data-a")===(a==="sky"&&skyOuter?"out":a))});
+  $("#boxIn").classList.toggle("hid",a!=="in");$("#boxSky").classList.toggle("hid",a!=="sky");$("#boxOut").classList.toggle("hid",a!=="out");
+  if(a==="sky")renderSkyPick();
+  if(a==="out")renderOutPick();
+}
+function renderSkyPick(){
+  var M=mk();if(!M||!M.sky){$("#skyBox").innerHTML="";$("#zoneChips").innerHTML="";$("#skyHelp").textContent="この会社には、青空駐車場の地図がありません";return}
+  var zs=M.sky.zones.filter(function(z){return z.both||!!z.outer===skyOuter});
+  if(!zs.length){$("#skyBox").innerHTML="";$("#zoneChips").innerHTML="";$("#skyHelp").textContent="ここには、置ける場所がありません";return}
+  if(skyZoneId&&!zs.some(function(z){return z.id===skyZoneId}))skyZoneId=null;
+  if(!skyZoneId){var zp=skyPos?zoneOfPos(M,skyPos):null;skyZoneId=zp?zp.id:zs[0].id}
+  $("#zoneChips").innerHTML=zs.map(function(z){return '<button type="button" data-z="'+z.id+'" class="'+(skyZoneId===z.id?"on":"")+'">'+z.name+'</button>'}).join("");
+  Array.prototype.forEach.call($("#zoneChips").children,function(b){b.onclick=function(){skyZoneId=b.getAttribute("data-z");if(skyPos){var zp=zoneOfPos(M,skyPos);if(!zp||zp.id!==skyZoneId)skyPos=null}renderSkyPick()}});
+  var others=entries.filter(function(x){if(!isSky(x)||x.id===editingId)return false;var zz=zoneOfPos(M,x.sky);return zz&&zz.id===skyZoneId});
+  var mine=skyPos&&zoneOfPos(M,skyPos)&&zoneOfPos(M,skyPos).id===skyZoneId;
+  $("#skyBox").innerHTML=mapSvg(others.map(function(x){return {p:x.sky,no:"",sky:true}}),mine?{p:skyPos,label:"ここ",sky:true}:null,null,{focusZone:skyZoneId});
+  $("#skyHelp").textContent=mine?"✓ 置きました。違う場所なら、もう一度タップしてください(薄いトラックは、ほかの配達先の車です)":"車が止まっている場所を、指でタップしてください(薄いトラックは、ほかの配達先の車です)";
+  $("#skyHelp").style.color=mine?"#1c7a4d":"";
+}
+Array.prototype.forEach.call($("#areaSeg").children,function(b){b.onclick=function(){if(b.disabled)return;setArea(b.getAttribute("data-a"))}});
+$("#skyBox").addEventListener("click",function(ev){
+  var M=mk(),sv=this.querySelector("svg");if(!M||!sv)return;
+  var pt=sv.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;var p=pt.matrixTransform(sv.getScreenCTM().inverse());
+  var zone=skyZone(M,skyZoneId);if(!zone||!inPoly(p.x,p.y,zone.poly)){$("#skyHelp").textContent="⚠ 色のついたエリアの中を、タップしてください";$("#skyHelp").style.color="#a8400b";return}
+  skyPos=[+p.x.toFixed(1),+p.y.toFixed(1)];renderSkyPick();
+});
+
+$("#fName").addEventListener("input",dupCheck);
+function spotCheck(){
+  var v=$("#fSpot").value,h=$("#spotHelp");
+  if(!mk()){h.textContent="書き方の例: A-3(区画の記号-番号)";return}
+  if(!v.trim()){h.textContent="例: H-5(文字A〜O と 数字1〜9。地図の柱の名前)";h.style.color="";return}
+  var ok=!!pos(v);
+  h.textContent=ok?"✓ 地図にある柱です("+normSpot(v)+")":"⚠ この柱は地図にありません。ルートでは最後に並びます";
+  h.style.color=ok?"#1c7a4d":"#a8400b";
+}
+$("#fSpot").addEventListener("input",spotCheck);
+function splitAl(t){return t.split(/[、,，\n]/).map(function(s){return s.trim()}).filter(Boolean)}
+function joinTime(){var a=$("#fT1").value,b=$("#fT2").value;return a&&b?a+"〜"+b:(a||b||"")}
+$("#fCancel").onclick=function(){closeSheet("shForm","bkForm")};
+$("#bkForm").onclick=function(){closeSheet("shForm","bkForm")};
+$("#fSave").onclick=function(){
+  var name=$("#fName").value.trim();if(!name){$("#fName").focus();return}
+  if(fArea==="sky"&&!skyPos){$("#fMsg").className="msg err";$("#fMsg").textContent="青空駐車場の地図で、車の場所をタップしてください";return}
+  if(fArea==="out"&&!fOut){$("#fMsg").className="msg err";$("#fMsg").textContent="場外の施設を選んでください";return}
+  var rec={id:editingId||("d_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,6)),name:name,aliases:splitAl($("#fAl").value),time:joinTime(),car:$("#fCar").value.trim(),spot:fArea==="in"?(normSpot($("#fSpot").value)&&mk()&&mk().pillars[normSpot($("#fSpot").value)]?normSpot($("#fSpot").value):(findSpot($("#fSpot").value)||findSpot($("#fLoc").value)||findSpot($("#fNote").value)||normSpot($("#fSpot").value))):"",loc:$("#fLoc").value.trim(),note:$("#fNote").value.trim(),imgs:tmpImgs.slice()};
+  if(fArea==="sky"){rec.area="sky";rec.sky=skyPos.slice()}
+  if(fArea==="out"){rec.area="out";rec.out=fOut;if(fDoor)rec.door=fDoor}
+  $("#fMsg").className="msg";$("#fMsg").textContent="保存中…";
+  api({action:"upsert",item:rec,pin:pass}).then(function(res){
+    if(res&&res.ok){entries=fixE(res.data.items);closeSheet("shForm","bkForm");renderAll();flash("保存しました")}
+    else if(res&&res.error==="bad_pin"){closeSheet("shForm","bkForm");askPass()}
+    else{$("#fMsg").className="msg err";$("#fMsg").textContent="保存できませんでした: "+((res&&(res.message||res.error))||"不明なエラー")}
+  });
+};
+$("#fDel").onclick=function(){
+  if(!editingId||!confirm("この配達先を削除しますか?"))return;
+  var id=editingId;
+  api({action:"delete",id:id,pin:pass}).then(function(res){
+    if(res&&res.ok){entries=fixE(res.data.items);routeIds=routeIds.filter(function(x){return x!==id});saveRoute();closeSheet("shForm","bkForm");renderAll();flash("削除しました")}
+    else{$("#fMsg").className="msg err";$("#fMsg").textContent="削除できませんでした"}
+  });
+};
+function flash(t){var s=$("#sync");s.textContent=t;s.className="sync";setTimeout(function(){s.classList.add("hid")},1800)}
+
+$("#mapClose").onclick=$("#bkMap").onclick=function(){closeSheet("shMap","bkMap")};
+
+/* ---- 設定 ---- */
+function renderAllList(){
+  var L=$("#allList");if(!entries.length){L.innerHTML='<p class="sub">まだありません</p>';return}
+  L.innerHTML=entries.slice().sort(function(a,b){return a.name.localeCompare(b.name,"ja")}).map(function(e){return '<div class="sug" style="margin:6px 0"><button data-qe="'+esc(e.id)+'"><span>'+esc(e.name)+'</span><small>編集</small></button></div>'}).join("");
+  Array.prototype.forEach.call(L.querySelectorAll("[data-qe]"),function(b){b.onclick=function(){closeSheet("shSet","bkSet");openForm(byId(b.getAttribute("data-qe")))}});
+}
+function placeUse(id){var M=mk(),n=0;entries.forEach(function(e){if(isOut(e)&&e.out===id)n++;else if(isSky(e)){var z=zoneOfPos(M,e.sky);if(z&&z.id===id)n++}});return n}
+function renderPlaces(){
+  var M=mk(),L=$("#plList");if(!M){L.innerHTML="";return}
+  var rows=[];(M.outside?M.outside.facilities:[]).forEach(function(f){rows.push({id:f.id,name:f.name,t:"建物"})});
+  (M.sky?M.sky.zones.filter(function(z){return z.outer||z.both}):[]).forEach(function(z){rows.push({id:z.id,name:z.name,t:"🚚 広場"})});
+  L.innerHTML=rows.map(function(r){var u=placeUse(r.id);return '<div class="plrow"><span>'+esc(r.name)+' <small>'+r.t+(u?' ・'+u+'件':'')+'</small></span><button data-rn="'+r.id+'">名前</button><button data-rm="'+r.id+'">消す</button></div>'}).join("")||'<p class="sub">まだありません</p>';
+  Array.prototype.forEach.call(L.querySelectorAll("[data-rn]"),function(b){b.onclick=function(){var id=b.getAttribute("data-rn"),cur=rows.filter(function(r){return r.id===id})[0].name,v=window.prompt("新しい名前",cur);if(v===null)return;v=v.trim();if(!v)return;
+    var P=pl(),a=P.added.filter(function(x){return x.id===id})[0];if(a)a.name=v;else P.names[id]=v;savePl();renderPlaces()}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-rm]"),function(b){b.onclick=function(){var id=b.getAttribute("data-rm"),u=placeUse(id);
+    if(u){$("#setMsg").className="msg err";$("#setMsg").textContent="使っている配達先が "+u+" 件あるので、消せません。先に配達先の場所を変えてください";return}
+    var P=pl(),i=P.added.map(function(x){return x.id}).indexOf(id);if(i>=0)P.added.splice(i,1);else if(P.hidden.indexOf(id)<0)P.hidden.push(id);savePl();$("#setMsg").className="msg";$("#setMsg").textContent="消しました";renderPlaces()}});
+}
+var plKind="fac",plPos=null;
+function fitRouteMaps(){Array.prototype.forEach.call($("#routeList").querySelectorAll(".mapbox.big"),function(el){var Mk=mk();fitBig(el,Mk?gatePos(Mk).p:null)})}
+function fitBig(el,focus){var sv=el.querySelector("svg");if(!sv)return;
+  if(focus){var vb=sv.getAttribute("viewBox").split(" ").map(Number),fx=(focus[0]-vb[0])/vb[2],fy=(focus[1]-vb[1])/vb[3];
+    el.scrollLeft=Math.max(0,fx*el.scrollWidth-el.clientWidth/2);el.scrollTop=Math.max(0,fy*el.scrollHeight-el.clientHeight/2);return}
+  el.scrollLeft=Math.max(0,(el.scrollWidth-el.clientWidth)*0.5);el.scrollTop=0}
+function renderPlBox(){
+  var M=mk();$("#plBox").innerHTML=M?mapSvg([],plPos?{p:plPos,label:($("#plName").value.trim()||"ここ")}:null,null,{wide:true,out:true,places:true}):"";fitBig($("#plBox"));
+  $("#plHelp").textContent=plPos?"✓ 置きました。違う場所なら、もう一度タップしてください":"行き先の場所を、指でタップしてください";$("#plHelp").style.color=plPos?"#1c7a4d":"";
+}
+$("#plAdd").onclick=function(){plKind="fac";plPos=null;$("#plName").value="";$("#plMsg").textContent="";Array.prototype.forEach.call($("#plKind").children,function(b){b.classList.toggle("on",b.getAttribute("data-k")==="fac")});closeSheet("shSet","bkSet");openSheet("shPl","bkPl");renderPlBox()};
+Array.prototype.forEach.call($("#plKind").children,function(b){b.onclick=function(){plKind=b.getAttribute("data-k");Array.prototype.forEach.call($("#plKind").children,function(x){x.classList.toggle("on",x===b)})}});
+$("#plBox").addEventListener("click",function(ev){var sv=this.querySelector("svg");if(!sv)return;var pt=sv.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;var p=pt.matrixTransform(sv.getScreenCTM().inverse());plPos=[+p.x.toFixed(1),+p.y.toFixed(1)];renderPlBox()});
+$("#plName").addEventListener("input",function(){if(plPos)renderPlBox()});
+$("#plClose").onclick=$("#bkPl").onclick=function(){closeSheet("shPl","bkPl");renderPlaces();openSheet("shSet","bkSet")};
+$("#plSave").onclick=function(){
+  var nm=$("#plName").value.trim();if(!nm){$("#plMsg").className="msg err";$("#plMsg").textContent="名前を入れてください";return}
+  if(!plPos){$("#plMsg").className="msg err";$("#plMsg").textContent="地図で、場所をタップしてください";return}
+  pl().added.push({id:"c_"+Date.now().toString(36),kind:plKind,name:nm,p:plPos.slice()});savePl();
+  closeSheet("shPl","bkPl");renderPlaces();openSheet("shSet","bkSet");$("#setMsg").className="msg";$("#setMsg").textContent="「"+nm+"」を足しました。登録の「場外」から選べます"};
+function renderBackup(){$("#bkText").value=JSON.stringify(entries)}
+$("#openSet").onclick=function(){$("#setSub").textContent=COMPANIES[CO].name+" の設定 / 登録 "+entries.length+"件";$("#setMsg").textContent="";renderBackup();renderPlaces();openSheet("shSet","bkSet")};
+$("#setClose").onclick=$("#bkSet").onclick=function(){closeSheet("shSet","bkSet")};
+$("#swCo").onclick=function(){closeSheet("shSet","bkSet");if(LOCK){alert("この画面は "+COMPANIES[CO].name+" 専用です");return}chooseCo()};
+$("#logout").onclick=function(){lsRawDel("hs2_pass_"+CO);closeSheet("shSet","bkSet");pass="";askPass()};
+$("#savePass").onclick=function(){
+  var np=$("#newPass").value.trim();if(np.length<4){$("#setMsg").className="msg err";$("#setMsg").textContent="4文字以上で入れてください";return}
+  api({action:"setPin",newPin:np,pin:pass}).then(function(res){
+    if(res&&res.ok){pass=np;lsRawSet("hs2_pass_"+CO,np);$("#newPass").value="";$("#setMsg").className="msg";$("#setMsg").textContent="PASSを変更しました。関係者に新しいPASSを伝えてください"}
+    else{$("#setMsg").className="msg err";$("#setMsg").textContent="変更できませんでした"}
+  });
+};
+$("#bkCopy").onclick=function(){var t=$("#bkText");t.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}if(!ok&&navigator.clipboard)navigator.clipboard.writeText(t.value);$("#setMsg").className="msg";$("#setMsg").textContent="コピーしました"};
+$("#bkRestore").onclick=function(){
+  var list;try{list=JSON.parse($("#bkText").value);if(!Array.isArray(list))throw 0}catch(e){$("#setMsg").className="msg err";$("#setMsg").textContent="内容を読み取れませんでした";return}
+  var p=Promise.resolve(true);list.forEach(function(it){p=p.then(function(ok){return ok===false?false:api({action:"upsert",item:it,pin:pass}).then(function(r){return !(r&&r.error==="bad_pin")})})});
+  p.then(function(){return api({action:"list",pin:pass})}).then(function(res){if(res&&res.ok){entries=fixE(res.data.items);renderAll();$("#setMsg").className="msg";$("#setMsg").textContent="復元しました("+entries.length+"件)"}});
+};
+
+/* ---- 起動 ---- */
+if(LOCK)enterCo(LOCK);else chooseCo();
+})();
+</script>
+</body>
+</html>
