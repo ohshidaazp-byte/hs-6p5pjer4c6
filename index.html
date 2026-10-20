@@ -147,6 +147,9 @@ button{font-family:inherit;cursor:pointer}
 .stop .ctl{display:flex;flex-direction:column;gap:6px}
 .stop .ctl button{width:48px;height:42px;border-radius:10px;border:2px solid var(--navy);background:var(--surface);color:var(--sumi);font-size:18px;font-weight:900}
 .stop .ctl .ok{background:var(--navy);color:#fff}
+.stop .nm.tap{cursor:pointer}
+.stop .more{background:none;border:0;padding:0;color:var(--tag);font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+#cardBox .ft{margin-top:0;box-shadow:none}
 .stop.done{opacity:.45}
 .stop.done .nm{text-decoration:line-through}
 .stop.done .ctl .ok{background:#1c7a4d;border-color:#1c7a4d}
@@ -542,6 +545,13 @@ textarea.bk{background:#0a1218;border:1px solid var(--line);color:var(--muted)}
     <button class="btn navy" id="plSave">足す</button>
   </div>
   <div class="acts"><button class="btn line flex1" id="plClose">やめる</button></div>
+</div>
+
+<div class="back hid" id="bkCard"></div>
+<div class="sheet hid" id="shCard">
+  <div class="grab"></div>
+  <div id="cardBox"></div>
+  <div class="acts"><button class="btn navy flex1" id="cardClose">閉じる</button></div>
 </div>
 
 <div class="back hid" id="bkMap"></div>
@@ -1028,7 +1038,7 @@ function renderRoute(){
     if(M){var stops=list.map(function(e,i){return {p:posE(e),no:i+1,done:!!routeDone[e.id],sky:isSky(e),out:isOut(e)}}).filter(function(s){return s.p});var UP=list.some(function(e){return isOut(e)||(isSky(e)&&((zoneOfPos(M,e.sky)||{}).outer||(zoneOfPos(M,e.sky)||{}).both))});html+='<div class="mapbox'+(UP?' big':'')+'">'+mapSvg(stops,null,lastSol&&lastSol.path,{skyZones:list.filter(isSky).map(function(e){var z=zoneOfPos(M,e.sky);return z.id}).filter(function(v,i,a){return a.indexOf(v)===i}),out:list.some(isOut),places:UP})+'</div>'}
     html+='<div class="start">スタート: '+(M?'水産棟の出入口 '+gatePos(M).id:esc(COMPANIES[CO].map.start))+'</div>';
     html+=list.map(function(e,i){var d=!!routeDone[e.id],has=!!posE(e);
-      return '<div class="stop '+(d?"done":"")+'"><div class="no">'+(i+1)+'</div><div><div class="nm">'+esc(e.name)+'</div><div class="meta">'+(isSky(e)?'<button class="spot spot-b sky-b" data-skymap="'+esc(e.id)+'">🚚 '+esc(skyName(e))+'</button>':isOut(e)?'<button class="spot spot-b out-b" data-outmap="'+esc(e.id)+'">🏢 '+esc((facOf(e.out)||{}).name||"場外")+(e.door?'('+esc(e.door)+')':'')+'</button>':(e.spot?'<button class="spot spot-b" data-map="'+esc(e.spot)+'">'+esc(normSpot(e.spot))+'</button>':'<span>位置未登録</span>'))+(!isSky(e)&&!isOut(e)&&e.spot&&M&&!has?'<span class="warnx">地図にない柱</span>':'')+(e.time?'<span>'+esc(e.time)+'</span>':'')+(e.car?'<span>'+esc(e.car)+'</span>':'')+'</div></div>'+
+      return '<div class="stop '+(d?"done":"")+'"><div class="no">'+(i+1)+'</div><div><div class="nm tap" data-detail="'+esc(e.id)+'">'+esc(e.name)+'</div><div class="meta"><button class="more" data-detail="'+esc(e.id)+'">詳しく ›</button>'+(isSky(e)?'<button class="spot spot-b sky-b" data-skymap="'+esc(e.id)+'">🚚 '+esc(skyName(e))+'</button>':isOut(e)?'<button class="spot spot-b out-b" data-outmap="'+esc(e.id)+'">🏢 '+esc((facOf(e.out)||{}).name||"場外")+(e.door?'('+esc(e.door)+')':'')+'</button>':(e.spot?'<button class="spot spot-b" data-map="'+esc(e.spot)+'">'+esc(normSpot(e.spot))+'</button>':'<span>位置未登録</span>'))+(!isSky(e)&&!isOut(e)&&e.spot&&M&&!has?'<span class="warnx">地図にない柱</span>':'')+(e.time?'<span>'+esc(e.time)+'</span>':'')+(e.car?'<span>'+esc(e.car)+'</span>':'')+'</div></div>'+
         '<div class="ctl"><button class="ok" data-ok="'+esc(e.id)+'" aria-label="済み">'+(d?"✓":"済")+'</button>'+
         (routeMode==="manual"?'<div class="mv"><button data-up="'+esc(e.id)+'" aria-label="上へ">↑</button><button data-dn="'+esc(e.id)+'" aria-label="下へ">↓</button></div>':'<button data-rm="'+esc(e.id)+'" aria-label="外す">✕</button>')+'</div></div>'}).join("");
   }
@@ -1043,6 +1053,7 @@ function renderRoute(){
   Array.prototype.forEach.call(L.querySelectorAll("[data-map]"),function(b){b.onclick=function(){showMap(b.getAttribute("data-map"))}});
   Array.prototype.forEach.call(L.querySelectorAll("[data-skymap]"),function(b){b.onclick=function(){showSkyMap(b.getAttribute("data-skymap"))}});
   Array.prototype.forEach.call(L.querySelectorAll("[data-outmap]"),function(b){b.onclick=function(){showOutMap(b.getAttribute("data-outmap"))}});
+  Array.prototype.forEach.call(L.querySelectorAll("[data-detail]"),function(b){b.onclick=function(){showCard(b.getAttribute("data-detail"))}});
   Array.prototype.forEach.call(L.querySelectorAll("[data-ok]"),function(b){b.onclick=function(){var id=b.getAttribute("data-ok");routeDone[id]=!routeDone[id];saveRoute();renderRoute();renderBadge()}});
   Array.prototype.forEach.call(L.querySelectorAll("[data-rm]"),function(b){b.onclick=function(){var id=b.getAttribute("data-rm");routeIds=routeIds.filter(function(x){return x!==id});delete routeDone[id];saveRoute();renderRoute();renderBadge();renderResults()}});
   Array.prototype.forEach.call(L.querySelectorAll("[data-up],[data-dn]"),function(b){b.onclick=function(){var id=b.getAttribute("data-up")||b.getAttribute("data-dn"),i=routeIds.indexOf(id),j=b.hasAttribute("data-up")?i-1:i+1;if(j<0||j>=routeIds.length)return;var t=routeIds[i];routeIds[i]=routeIds[j];routeIds[j]=t;saveRoute();renderRoute()}});
@@ -1192,6 +1203,12 @@ $("#fDel").onclick=function(){
 function flash(t){var s=$("#sync");s.textContent=t;s.className="sync";setTimeout(function(){s.classList.add("hid")},1800)}
 
 $("#mapClose").onclick=$("#bkMap").onclick=function(){closeSheet("shMap","bkMap")};
+/* ルートの配達先をタップ → 「さがす」と同じ、全部の情報のカードを出す */
+function showCard(id){var e=byId(id);if(!e)return;var box=$("#cardBox");box.innerHTML=card(e);bindCards(box);loadPh(box);
+  Array.prototype.forEach.call(box.querySelectorAll("[data-edit]"),function(b){b.onclick=function(){closeSheet("shCard","bkCard");openForm(e)}});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-add]"),function(b){b.onclick=function(){addRoute(id);renderResults();showCard(id)}});
+  openSheet("shCard","bkCard")}
+$("#cardClose").onclick=$("#bkCard").onclick=function(){closeSheet("shCard","bkCard")};
 
 /* ---- 設定 ---- */
 function renderAllList(){
