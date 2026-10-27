@@ -532,6 +532,7 @@ textarea.bk{background:#0a1218;border:1px solid var(--line);color:var(--muted)}
     <button class="btn ghost flex1" id="logout">この端末のPASSを忘れる</button>
   </div>
   <div class="acts"><button class="btn navy flex1" id="setClose">閉じる</button></div>
+  <p class="sub" id="verTxt" style="text-align:center;margin-top:10px"></p>
 </div>
 
 <div class="back hid" id="bkPl"></div>
@@ -1270,6 +1271,7 @@ $("#bkCopy").onclick=function(){
 $("#bkRestore").onclick=function(){
   var btn=this,m=$("#bkMsg"),list;
   if(btn.disabled)return;
+  m.className="msg";m.textContent="読み取っています…";
   try{list=JSON.parse($("#bkText").value);if(!Array.isArray(list))throw 0}catch(e){m.className="msg err";m.textContent="内容を読み取れませんでした。コピーが途中で切れていないか確かめてください";return}
   if(!list.length){m.className="msg err";m.textContent="復元する内容がありません";return}
   var n=list.length,i=0,ok=0,ng=0,bad=false;
@@ -1293,6 +1295,9 @@ $("#bkRestore").onclick=function(){
   })
 };
 
+/* ---- 版(古い画面が残っていたら、新しい版に自動で切り替える) ---- */
+var APP_VER="1027d";try{$("#verTxt").textContent="版 "+APP_VER}catch(e){}
+try{fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=/var APP_VER="([^"]+)"/.exec(t);if(m&&m[1]!==APP_VER){var u=new URL(location.href);u.searchParams.set("v",m[1]);location.replace(u.toString())}}).catch(function(){})}catch(e){}
 /* ---- 起動 ---- */
 if(LOCK)enterCo(LOCK);else chooseCo();
 })();
