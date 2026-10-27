@@ -1260,7 +1260,12 @@ $("#savePass").onclick=function(){
     else{$("#setMsg").className="msg err";$("#setMsg").textContent="変更できませんでした"}
   });
 };
-$("#bkCopy").onclick=function(){var t=$("#bkText");t.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}if(!ok&&navigator.clipboard)navigator.clipboard.writeText(t.value);$("#setMsg").className="msg";$("#setMsg").textContent="コピーしました"};
+$("#bkCopy").onclick=function(){
+  var t=$("#bkText"),m=$("#setMsg");
+  function done(ok){m.className=ok?"msg":"msg err";m.textContent=ok?"コピーしました":"コピーできませんでした。枠を長押しして「すべてを選択」→「コピー」を押してください"}
+  function manual(){var ok=false;try{t.focus();t.select();t.setSelectionRange(0,t.value.length);ok=document.execCommand("copy")}catch(e){}done(ok)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.value).then(function(){done(true)},manual)}else manual()
+};
 $("#bkRestore").onclick=function(){
   var list;try{list=JSON.parse($("#bkText").value);if(!Array.isArray(list))throw 0}catch(e){$("#setMsg").className="msg err";$("#setMsg").textContent="内容を読み取れませんでした";return}
   var p=Promise.resolve(true);list.forEach(function(it){p=p.then(function(ok){return ok===false?false:api({action:"upsert",item:it,pin:pass}).then(function(r){return !(r&&r.error==="bad_pin")})})});
