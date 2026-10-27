@@ -525,6 +525,7 @@ textarea.bk{background:#0a1218;border:1px solid var(--line);color:var(--muted)}
   <p class="sub">端末を変える時などに備えて、時々コピーして保管してください。</p>
   <textarea class="bk" id="bkText" placeholder="ほかの端末や会社のバックアップを、ここに貼り付けて「この内容から復元」を押します"></textarea>
   <div class="acts"><button class="btn line flex1" id="bkCopy">コピー</button><button class="btn line flex1" id="bkRestore">この内容から復元</button></div>
+  <div class="msg" id="bkMsg"></div>
   <hr>
   <div class="acts">
     <button class="btn line flex1" id="swCo">会社を切り替える</button>
@@ -1261,15 +1262,35 @@ $("#savePass").onclick=function(){
   });
 };
 $("#bkCopy").onclick=function(){
-  var t=$("#bkText"),m=$("#setMsg");
+  var t=$("#bkText"),m=$("#bkMsg");
   function done(ok){m.className=ok?"msg":"msg err";m.textContent=ok?"コピーしました":"コピーできませんでした。枠を長押しして「すべてを選択」→「コピー」を押してください"}
   function manual(){var ok=false;try{t.focus();t.select();t.setSelectionRange(0,t.value.length);ok=document.execCommand("copy")}catch(e){}done(ok)}
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.value).then(function(){done(true)},manual)}else manual()
 };
 $("#bkRestore").onclick=function(){
-  var list;try{list=JSON.parse($("#bkText").value);if(!Array.isArray(list))throw 0}catch(e){$("#setMsg").className="msg err";$("#setMsg").textContent="内容を読み取れませんでした";return}
-  var p=Promise.resolve(true);list.forEach(function(it){p=p.then(function(ok){return ok===false?false:api({action:"upsert",item:it,pin:pass}).then(function(r){return !(r&&r.error==="bad_pin")})})});
-  p.then(function(){return api({action:"list",pin:pass})}).then(function(res){if(res&&res.ok){entries=fixE(res.data.items);renderAll();$("#setMsg").className="msg";$("#setMsg").textContent="復元しました("+entries.length+"件)"}});
+  var btn=this,m=$("#bkMsg"),list;
+  if(btn.disabled)return;
+  try{list=JSON.parse($("#bkText").value);if(!Array.isArray(list))throw 0}catch(e){m.className="msg err";m.textContent="内容を読み取れませんでした。コピーが途中で切れていないか確かめてください";return}
+  if(!list.length){m.className="msg err";m.textContent="復元する内容がありません";return}
+  var n=list.length,i=0,ok=0,ng=0,bad=false;
+  btn.disabled=true;
+  function show(){m.className="msg";m.textContent="復元中… "+(ok+ng)+" / "+n+"(終わるまで画面を閉じないでください)"}
+  function next(){
+    if(bad||i>=n)return Promise.resolve();
+    var it=list[i++];
+    return api({action:"upsert",item:it,pin:pass}).then(function(r){
+      if(r&&r.error==="bad_pin")bad=true;else if(r&&r.ok)ok++;else ng++;
+      show();return next()
+    })
+  }
+  show();
+  Promise.all([next(),next(),next()]).then(function(){return api({action:"list",pin:pass})}).then(function(res){
+    btn.disabled=false;
+    if(bad){m.className="msg err";m.textContent="PASSが合いませんでした。入れ直してください";return}
+    if(res&&res.ok){entries=fixE(res.data.items);renderAll();$("#setSub").textContent=COMPANIES[CO].name+" の設定 / 登録 "+entries.length+"件"}
+    m.className=ng?"msg err":"msg";
+    m.textContent="復元しました: 成功 "+ok+"件"+(ng?" / 失敗 "+ng+"件(もう一度押すと、残りを入れ直せます)":"")+" / 今の登録 "+entries.length+"件"
+  })
 };
 
 /* ---- 起動 ---- */
